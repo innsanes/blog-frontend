@@ -12,13 +12,14 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import MarkdownEditor from './MarkdownEditor.vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import ElementPlus from 'element-plus'
 import { fetchBlog, blogupdate, blogcreate } from '../api/blog'
 import { useBlogStore } from '../stores/blog'
 
 const blogStore = useBlogStore()
 const route = useRoute()
+const router = useRouter()
 
 const getBlog = async (id: number) => {
     try {
@@ -37,17 +38,18 @@ const saveBlog = async () => {
                 name: blogStore.editBlogName,
                 content: blogStore.editBlogContent
             })
+            router.push('/')
         } catch (error) {
             console.error('Failed to update blog:', error)
         }
     } else  {
         try {
-      console.log('Blog updated:', blogStore.editBlogId, blogStore.editBlogName, blogStore.editBlogContent)
-        await blogupdate({
-            id: blogStore.editBlogId,
-            name: blogStore.editBlogName,
-            content: blogStore.editBlogContent
-        })
+            await blogupdate({
+                id: blogStore.editBlogId,
+                name: blogStore.editBlogName,
+                content: blogStore.editBlogContent
+            })
+            router.push('/blog/' + blogStore.editBlogId)
         } catch (error) {
             console.error('Failed to update blog:', error)
         }
@@ -58,6 +60,9 @@ onMounted(() => {
     blogStore.editBlogId = Number(route.params.id)
     if (blogStore.editBlogId) {
         getBlog(blogStore.editBlogId)
+    } else {
+        blogStore.editBlogName = ''
+        blogStore.editBlogContent = ''
     }
 })
 </script>

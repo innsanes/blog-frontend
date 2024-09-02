@@ -18,17 +18,23 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useUserStore } from '../stores/user'
+import { login } from '../api/user'
+import { useRouter } from 'vue-router'
+
 // 可以在组件中的任意位置访问 `store` 变量 ✨
 const userStore = useUserStore()
 const username = ref('')
 const password = ref('')
+const router = useRouter()
 
 const handleLogin = () => {
     // 处理登录逻辑
     if (username.value && password.value) {
-        userStore.userlogin({ username: username.value, password: password.value })
+        login({ name: username.value, password: password.value })
             .then(response => {
+                userStore.token = response.token
                 console.log('Login successful:', response)
+                router.push('/')
             })
             .catch(error => {
                 console.error('Login failed:', error)

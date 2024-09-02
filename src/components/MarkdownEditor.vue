@@ -7,8 +7,10 @@ import { ref, onMounted, onBeforeUnmount } from 'vue'
 import Vditor from 'vditor'
 import "vditor/src/assets/less/index.less"
 import { useBlogStore } from '../stores/blog'
+import { useUserStore } from '../stores/user'
 
 const blogStore = useBlogStore()
+const userStore = useUserStore()
 
 const editor = ref<HTMLElement | null>(null)
 const contentEditor = ref<Vditor | null>(null);
@@ -83,7 +85,10 @@ const initVditor = () => {
         tab: '\t',
         upload: {
             accept: 'image/*',
-            token: 'test',
+            // token: userStore.token,
+            headers: {
+                "X-Token": userStore.token,
+            },
             url: 'http://localhost:8000/image/upload',
             multiple: false,
             fieldName: 'file',

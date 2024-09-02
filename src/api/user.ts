@@ -4,6 +4,9 @@ export function login(data: { name: string, password: string }) {
   return request({
     url: '/login',
     method: 'post',
-    params: data
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    data: JSON.stringify(data)
   })
 }
