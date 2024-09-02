@@ -11,6 +11,7 @@ import { useBlogStore } from '../stores/blog'
 const blogStore = useBlogStore()
 
 const editor = ref<HTMLElement | null>(null)
+const contentEditor = ref<Vditor | null>(null);
 
 let toolbar = [
     'emoji',
@@ -56,15 +57,19 @@ let toolbar = [
     }
 ]
 
+const editorId = () => {
+    return 'vditor-' + blogStore.editBlogId
+}
+
 const initVditor = () => {
-    window.vditor = new Vditor(editor.value, {
-        value: blogStore.editBlogContent,
+    contentEditor.value = new Vditor(editor.value, {
         toolbarConfig: {
             pin: true,
         },
         toolbar,
         cache: {
-            enable: false,
+            enable: true,
+            id: editorId
         },
         preview: {
             markdown: {
@@ -104,11 +109,16 @@ const initVditor = () => {
         input(value: string) {
             blogStore.editBlogContent = value
         },
+        after(){
+            contentEditor.value.setValue(blogStore.editBlogContent);
+        }
     })
 }
 
 onMounted(() => {
     initVditor()
+    // update content
+    // contentEditor.value.setValue(blogStore.editBlogContent)
 })
 
 onBeforeUnmount(() => {
