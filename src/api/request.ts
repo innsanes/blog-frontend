@@ -1,7 +1,5 @@
 import axios from 'axios'
-// import { useUserStore } from '../stores/user'
-
-// const store = useUserStore()
+import { useUserStore } from '../stores/user'
 
 // create an axios instance
 const service = axios.create({
@@ -16,12 +14,12 @@ service.interceptors.request.use(
   config => {
     // do something before request is sent
 
-    // if (store.token) {
-      // let each request carry token
-      // ['X-Token'] is a custom headers key
-      // please modify it according to the actual situation
-      // config.headers['X-Token'] = store.token
-    // }
+    // 延迟初始化 避免产生错误的加载顺序
+    const userStore = useUserStore()
+
+    if (userStore.token) {
+      config.headers['X-Token'] = userStore.token
+    }
     return config
   },
   error => {
