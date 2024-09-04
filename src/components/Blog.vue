@@ -1,18 +1,26 @@
 <template>
-    <div>
+    <div class="blog">
         <h1>{{ blog.name }}</h1>
-        <RouterLink :to='getBlogEditRouter(blog.id)'>Edit</RouterLink>
+        <p class="author">Innsane</p>
+        <div class="edit-link">
+            <RouterLink v-if="userStore.token != ''" :to="getBlogEditRouter(blog.id)">
+                Edit
+            </RouterLink>
+        </div>
+        <el-divider />
         <MarkdownPreview :mdContent="blog.content" />
     </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { RouterLink, useRoute } from 'vue-router'
 import { fetchBlog } from '../api/blog'
 import { useBlogStore } from '../stores/blog';
+import { useUserStore } from '../stores/user'
 import MarkdownPreview from './MarkdownPreview.vue'
 
+const userStore = useUserStore()
 const blogStore = useBlogStore()
 const blog = ref({ id: 0, name: '', content: '' })
 const route = useRoute()
@@ -45,10 +53,23 @@ onMounted(() => {
 
 <style scoped>
 h1 {
-    margin: 0;
+  margin-bottom: 20px;
+  text-align: center;
 }
 
-p {
-    margin: 10px 0 0;
+.author {
+  color: #888;
+  margin-bottom: 20px;
+  text-align: right;
+}
+
+.blog {
+    max-width: 800px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 20px;
+}
+.edit-link {
+    text-align: right;
 }
 </style>

@@ -1,18 +1,24 @@
 <template>
-    <div>
-        <h1>Login</h1>
-        <form @submit.prevent="handleLogin">
-            <div>
-                <label for="username">Username:</label>
-                <input type="text" id="username" v-model="username" required />
+  <div class="login-container">
+    <el-card style="max-width: 600px">
+        <template #header>
+            <div class="card-header">
+                <span>Login</span>
             </div>
-            <div>
-                <label for="password">Password:</label>
-                <input type="password" id="password" v-model="password" required />
-            </div>
-            <button type="submit">Login</button>
-        </form>
-    </div>
+        </template>
+        <el-form :model="form" :rules="rules" ref="loginForm" label-width="100px">
+        <el-form-item label="Username" prop="username">
+            <el-input v-model="form.username" autocomplete="off"></el-input>
+        </el-form-item>
+        <el-form-item label="Password" prop="password">
+            <el-input type="password" v-model="form.password" autocomplete="off"></el-input>
+        </el-form-item>
+        <el-form-item>
+            <el-button type="primary" @click="handleLogin">Login</el-button>
+        </el-form-item>
+        </el-form>
+    </el-card>
+</div>
 </template>
 
 <script setup lang="ts">
@@ -20,56 +26,50 @@ import { ref } from 'vue'
 import { useUserStore } from '../stores/user'
 import { login } from '../api/user'
 import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
 
-// 可以在组件中的任意位置访问 `store` 变量 ✨
+const form = ref({
+  username: '',
+  password: ''
+})
+
+const rules = ref({
+  username: [
+    { required: true, message: 'Please input username', trigger: 'blur' }
+  ],
+  password: [
+    { required: true, message: 'Please input password', trigger: 'blur' }
+  ]
+})
+
+const loginForm = ref(null)
 const userStore = useUserStore()
-const username = ref('')
-const password = ref('')
 const router = useRouter()
 
 const handleLogin = () => {
-    // 处理登录逻辑
-    if (username.value && password.value) {
-        login({ name: username.value, password: password.value })
-            .then(response => {
-                userStore.token = response.token
-                console.log('Login successful:', response)
-                router.push('/')
-            })
-            .catch(error => {
-                console.error('Login failed:', error)
-            })
+  loginForm.value.validate((valid: boolean) => {
+    if (valid) {
+      login({ name: form.value.username, password: form.value.password })
+        .then(response => {
+          userStore.token = response.token
+          ElMessage.success('Login successful')
+          router.push('/')
+        })
+        .catch(error => {
+          ElMessage.error('Login failed: ' + error.message)
+        })
     } else {
-        console.error('Username and password are required')
+      ElMessage.error('Please fill in the form correctly')
     }
+  })
 }
 </script>
 
 <style scoped>
-/* 添加一些简单的样式 */
-form {
-    display: flex;
-    flex-direction: column;
-    width: 300px;
-    margin: auto;
-}
-
-div {
-    margin-bottom: 10px;
-}
-
-label {
-    margin-bottom: 5px;
-}
-
-input {
-    padding: 8px;
-    font-size: 16px;
-}
-
-button {
-    padding: 10px;
-    font-size: 16px;
-    cursor: pointer;
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 80vh;
 }
 </style>

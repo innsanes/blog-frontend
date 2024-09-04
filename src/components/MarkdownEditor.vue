@@ -85,7 +85,6 @@ const initVditor = () => {
         tab: '\t',
         upload: {
             accept: 'image/*',
-            // token: userStore.token,
             headers: {
                 "X-Token": userStore.token,
             },

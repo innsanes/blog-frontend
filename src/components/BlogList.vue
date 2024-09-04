@@ -1,18 +1,27 @@
 <template>
-  <div>
-    <h1>BlogList</h1>
-    <RouterLink to="/blog/edit/0">Create New Blog</RouterLink>
-    <ul>
-      <li v-for="blog in blogs" :key="blog.id">
-        <RouterLink :to="blogRouter(blog.id)">{{ blog.name }}</RouterLink>
-      </li>
-    </ul>
+  <div class="blog-list">
+    <h1>Innsane Blog</h1>
+    <el-table :data="blogs" style="width: 100%">
+      <el-table-column prop="name" label="Title">
+        <template #default="scope">
+          <RouterLink :to="blogRouter(scope.row.id)">{{ scope.row.name }}</RouterLink>
+        </template>
+      </el-table-column>
+      <el-table-column prop="name" label="CreateTime"  width="180">
+        <template #default="scope">
+          <span>{{ timeFormat(scope.row.createTime) }}</span>
+        </template>
+      </el-table-column>
+    </el-table>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { bloglist } from '../api/blog'
+import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import { timeFormat } from '../util/time'
 
 const blogs = ref([])
 
@@ -25,9 +34,11 @@ const fetchBlogs = async () => {
     const response = await bloglist()
     blogs.value = response
   } catch (error) {
-    console.error('Failed to fetch blogs:', error)
+    ElMessage.error('Failed to fetch blogs: ' + error.message)
   }
 }
+
+const router = useRouter()
 
 onMounted(() => {
   fetchBlogs()
@@ -35,20 +46,11 @@ onMounted(() => {
 </script>
 
 <style scoped>
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-
-li {
+.el-button {
   margin-bottom: 20px;
 }
-
-h2 {
-  margin: 0;
-}
-
-p {
-  margin: 5px 0 0;
+.blog-list {
+  max-width: 1000px;
+  margin: 0 auto;
 }
 </style>

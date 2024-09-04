@@ -1,11 +1,12 @@
 <template>
-    <div class="markdown-body" v-html="renderedHtml"></div>
+  <div class="markdown-body" v-html="renderedHtml"></div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
 import MarkdownIt from 'markdown-it'
 import 'github-markdown-css/github-markdown.css';
+import { defineProps } from 'vue'
 
 const props = defineProps<{
     mdContent: string
