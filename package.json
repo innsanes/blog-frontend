@@ -15,6 +15,7 @@
     "markdown-it": "^14.1.0",
     "md-editor-v3": "^4.19.2",
     "pinia": "^2.2.2",
+    "pinia-plugin-persistedstate": "^3.2.3",
     "vditor": "^3.10.5",
     "vue": "^3.4.37",
     "vue-router": "^4.4.3"
