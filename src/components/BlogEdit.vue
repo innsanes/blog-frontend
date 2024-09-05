@@ -1,7 +1,7 @@
 <template>
   <h1> BlogEdit </h1>
   <el-input
-    v-model="blogStore.editBlogName"
+    v-model="blogStore.blogName"
     style="width: 240px"
     clearable
   />
@@ -24,19 +24,19 @@ const router = useRouter()
 const getBlog = async (id: number) => {
     try {
         const response = await fetchBlog(id)
-        blogStore.editBlogName = response.name
-        blogStore.editBlogContent = response.content
+        blogStore.blogName = response.name
+        blogStore.blogContent = response.content
     } catch (error) {
         console.error('Failed to fetch blog:', error)
     }
 }
 
 const saveBlog = async () => {
-    if (blogStore.editBlogId === 0) {
+    if (blogStore.blogId === 0) {
         try {
             await blogcreate({
-                name: blogStore.editBlogName,
-                content: blogStore.editBlogContent
+                name: blogStore.blogName,
+                content: blogStore.blogContent
             })
             router.push('/')
         } catch (error) {
@@ -45,11 +45,11 @@ const saveBlog = async () => {
     } else  {
         try {
             await blogupdate({
-                id: blogStore.editBlogId,
-                name: blogStore.editBlogName,
-                content: blogStore.editBlogContent
+                id: blogStore.blogId,
+                name: blogStore.blogName,
+                content: blogStore.blogContent
             })
-            router.push('/blog/' + blogStore.editBlogId)
+            router.push('/blog/' + blogStore.blogId)
         } catch (error) {
             console.error('Failed to update blog:', error)
         }
@@ -57,12 +57,13 @@ const saveBlog = async () => {
 }
 
 onMounted(() => {
-    blogStore.editBlogId = Number(route.params.id)
-    if (blogStore.editBlogId) {
-        getBlog(blogStore.editBlogId)
+    blogStore.blogId = Number(route.params.id)
+    if (!blogStore.blogId || blogStore.blogId === 0) {
+        blogStore.blogId = 0
+        blogStore.blogName = ''
+        blogStore.blogContent = ''
     } else {
-        blogStore.editBlogName = ''
-        blogStore.editBlogContent = ''
+        getBlog(blogStore.blogId)
     }
 })
 </script>

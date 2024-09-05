@@ -35,9 +35,12 @@
 import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useUserStore } from '../stores/user'
+import { useBlogStore } from '../stores/blog'
 import { useRouter} from 'vue-router'
 
+const router = useRouter()
 const userStore = useUserStore()
+const blogStore = useBlogStore()
 const drawerVisible = ref(false)
 const isCollapse = ref(false)
 const buttonClick = () => {
@@ -46,6 +49,14 @@ const buttonClick = () => {
 
 const closeDrawer = () => {
     drawerVisible.value = false
+}
+
+const routerCreateNew = () => {
+    closeDrawer()
+    blogStore.blogId = 0
+    blogStore.blogName = ''
+    blogStore.blogContent = ''
+    router.push('/blog/edit/0')
 }
 
 </script>

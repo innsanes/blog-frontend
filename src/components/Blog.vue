@@ -1,14 +1,14 @@
 <template>
     <div class="blog">
-        <h1>{{ blog.name }}</h1>
+        <h1>{{ blogStore.blogName }}</h1>
         <p class="author">Innsane</p>
         <div class="edit-link">
-            <RouterLink v-if="userStore.token != ''" :to="getBlogEditRouter(blog.id)">
+            <RouterLink v-if="userStore.token != ''" :to="getBlogEditRouter()">
                 Edit
             </RouterLink>
         </div>
         <el-divider />
-        <MarkdownPreview :mdContent="blog.content" />
+        <MarkdownPreview :mdContent="blogStore.content" />
     </div>
 </template>
 
@@ -22,21 +22,21 @@ import MarkdownPreview from './MarkdownPreview.vue'
 
 const userStore = useUserStore()
 const blogStore = useBlogStore()
-const blog = ref({ id: 0, name: '', content: '' })
+// const blog = ref({ id: 0, name: '', content: '' })
 const route = useRoute()
 
 const getBlogEditRouter = function (id: number) {
-    blogStore.editBlogId = id
-    blogStore.editBlogName = blog.value.name
-    blogStore.editBlogContent = blog.value.content
-    return '/blog/edit/' + id
+    // blogStore.blogId = id
+    // blogStore.blogName = blog.value.name
+    // blogStore.blogContent = blog.value.content
+    return '/blog/edit/' + blogStore.blogId
 }
 
 const getBlog = async (id: number) => {
     try {
         const response = await fetchBlog(id)
-        blog.value.name = response.name
-        blog.value.content = response.content
+        blogStore.blogName = response.name
+        blogStore.blogContent = response.content
     } catch (error) {
         console.error('Failed to fetch blog:', error)
     }
@@ -44,8 +44,8 @@ const getBlog = async (id: number) => {
 
 onMounted(() => {
     const blogId = Number(route.params.id)
-    if (blogId) {
-        blog.value.id = blogId
+    if (blogId !== 0) {
+        blogStore.blogId = blogId
         getBlog(blogId as number)
     }
 })

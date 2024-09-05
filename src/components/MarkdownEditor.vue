@@ -60,7 +60,7 @@ let toolbar = [
 ]
 
 const editorId = () => {
-    return 'vditor-' + blogStore.editBlogId
+    return 'vditor-' + blogStore.blogId
 }
 
 const initVditor = () => {
@@ -111,10 +111,10 @@ const initVditor = () => {
             },
         },
         input(value: string) {
-            blogStore.editBlogContent = value
+            blogStore.blogContent = value
         },
         after(){
-            contentEditor.value.setValue(blogStore.editBlogContent);
+            contentEditor.value.setValue(blogStore.blogContent);
         }
     })
 }
