@@ -17,27 +17,19 @@ import '@/styles/vitepress/base.css'
 import '@/styles/vitepress/components/custom-block.css'
 import '@/styles/vitepress/components/vp-code.css'
 import '@/styles/vitepress/components/vp-doc.css'
-import createMarkdownRenderer from './markdownvp/markdown'
+import {createMarkdownRenderer} from './markdownvp/markdown'
 
 const blogStore = useBlogStore()
 const renderedHtml = ref<string>('')  // 正确类型
 
+
 const md = await createMarkdownRenderer()
-
 onMounted(async () => {
-  const shikiPlugin = await Shiki({
-    themes: {
-      light: 'github-light',
-      dark: 'github-dark',
-    },
-  })
-
-  md.use(shikiPlugin)
-  renderedHtml.value = md.render('[TOC]\n' + blogStore.blogContent)
+  renderedHtml.value = md.renderAsync(blogStore.blogContent)
 })
 
 watch(() => blogStore.blogContent, () => {
-  renderedHtml.value = md.render('[TOC]\n' + blogStore.blogContent)
+  renderedHtml.value = md.render(blogStore.blogContent)
 })
 
 </script>
