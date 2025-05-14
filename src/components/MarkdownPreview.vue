@@ -1,19 +1,25 @@
 <template>
-    <div class="markdown-body custom-markdown-body" v-html="renderedHtml"></div>
+    <!-- <div class="markdown-body custom-markdown-body" v-html="renderedHtml"></div> -->
+     <!-- public/index.html -->
+    <div class="vp-doc custom-markdown-body" v-html="renderedHtml"></div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import MarkdownIt from 'markdown-it'
-import hljs from 'highlight.js' // https://highlightjs.org
+import Shiki from '@shikijs/markdown-it'
 import MarkdownItAnchor from 'markdown-it-anchor'
 import MarkdownItToc from 'markdown-it-toc-done-right'
+import MarkdownItContainer from 'markdown-it-container'
 import { useBlogStore } from '../stores/blog'
-import 'github-markdown-css/github-markdown-light.css';
-import 'highlight.js/styles/github.css'; // 引入样式 (可以根据需要选择不同的样式)
+import '@/styles/vitepress/vars.css'
+import '@/styles/vitepress/base.css'
+import '@/styles/vitepress/components/custom-block.css'
+import '@/styles/vitepress/components/vp-code.css'
+import '@/styles/vitepress/components/vp-doc.css'
 
 const blogStore = useBlogStore()
-const renderedHtml = ref<HTMLElement | null>(null)
+const renderedHtml = ref<string>('')  // 正确类型
 
 const md = MarkdownIt({
     html: false, // Enable HTML tags in source
@@ -25,18 +31,13 @@ const md = MarkdownIt({
     _highlight: true,
     _strict: false,
     _view: 'html', // html / src / debug
-    highlight: function (str, lang) {
-        var esc = md.utils.escapeHtml;
-        if (lang && hljs.getLanguage(lang)) {
-            try {
-                return '<pre class="hljs"><code>' +
-                    hljs.highlight(str, {language: lang, ignoreIllegals: true }).value +
-                    '</code></pre>';
-            } catch (__) {}
-        } else {
-            return '<pre class="hljs"><code>' + esc(str) + '</code></pre>';
-        }
-    }
+    // highlight: function (str, lang) {
+    //     try {
+    //         return `<pre class="hljs"><code>${codeToHtml(str, { lang: lang, theme: 'vitesse-light' })}</code></pre>`
+    //     } catch (err) {
+    //         return `<pre class="hljs"><code>${md.utils.escapeHtml(str)}</code></pre>`
+    //     }
+    // }
 })
 md.use(MarkdownItAnchor, {
     permalink: MarkdownItAnchor.permalink.linkInsideHeader({  // 在标题内部添加一个可点击的图标
@@ -57,9 +58,26 @@ md.use(MarkdownItToc, {
     slugify: s => s.trim().toLowerCase().replace(/\s+/g, '-'),
     callback: (html, ast) => {},
 })
+// md.use(await Shiki({
+//   themes: {
+//     light: 'vitesse-light',
+//     dark: 'vitesse-dark',
+//   }
+// }))
+md.use(MarkdownItContainer, 'tip')
+md.use(MarkdownItContainer, 'warning')
+md.use(MarkdownItContainer, 'danger')
 
-onMounted(() => {
-    renderedHtml.value = md.render('[TOC]\n' + blogStore.blogContent)
+onMounted(async () => {
+  const shikiPlugin = await Shiki({
+    themes: {
+      light: 'vitesse-light',
+      dark: 'vitesse-dark',
+    },
+  })
+
+  md.use(shikiPlugin)
+  renderedHtml.value = md.render('[TOC]\n' + blogStore.blogContent)
 })
 
 watch(() => blogStore.blogContent, () => {

@@ -6,7 +6,10 @@
   "scripts": {
     "dev": "vite --host",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
   },
   "dependencies": {
     "axios": "^1.7.5",
@@ -15,20 +18,25 @@
     "highlight.js": "^11.10.0",
     "markdown-it": "^14.1.0",
     "markdown-it-anchor": "^9.1.0",
+    "markdown-it-container": "^4.0.0",
     "markdown-it-highlight": "^0.2.0",
     "markdown-it-toc-done-right": "^4.2.0",
     "md-editor-v3": "^4.19.2",
     "pinia": "^2.2.2",
     "pinia-plugin-persistedstate": "^3.2.3",
+    "pnpm": "^10.10.0",
     "vditor": "^3.10.5",
     "vue": "^3.4.37",
     "vue-router": "^4.4.3"
   },
   "devDependencies": {
+    "@shikijs/markdown-it": "^3.4.0",
     "@vitejs/plugin-vue": "^5.1.2",
     "less": "^4.2.0",
+    "shiki": "^3.4.0",
     "typescript": "^5.5.3",
     "vite": "^5.4.1",
+    "vitepress": "^1.6.3",
     "vue-tsc": "^2.0.29"
   }
 }
