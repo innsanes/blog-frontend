@@ -1,35 +1,49 @@
 <template>
-  <!-- <div class="markdown-body custom-markdown-body" v-html="renderedHtml"></div> -->
-  <!-- public/index.html -->
-  <div class="vp-doc custom-markdown-body" v-html="renderedHtml"></div>
+  <el-skeleton :loading="loading" animated>
+    <template #template>
+      <div class="vp-doc custom-markdown-body">
+        <el-skeleton-item variant="p" v-for="i in 10" :key="i" />
+      </div>
+    </template>
+    <template #default>
+      <div class="vp-doc custom-markdown-body" v-html="renderedHtml"></div>
+    </template>
+  </el-skeleton>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
-import MarkdownIt from 'markdown-it'
-import Shiki from '@shikijs/markdown-it'
-import MarkdownItAnchor from 'markdown-it-anchor'
-import MarkdownItToc from 'markdown-it-toc-done-right'
-import MarkdownItContainer from 'markdown-it-container'
+import { ref, onMounted, watch } from 'vue'
 import { useBlogStore } from '../stores/blog'
-import '@/styles/vitepress/vars.css'
-import '@/styles/vitepress/base.css'
-import '@/styles/vitepress/components/custom-block.css'
-import '@/styles/vitepress/components/vp-code.css'
-import '@/styles/vitepress/components/vp-doc.css'
 import {createMarkdownRenderer} from './markdownvp/markdown'
 
 const blogStore = useBlogStore()
 const renderedHtml = ref<string>('')  // 正确类型
+const md = ref<any>(null)
+const loading = ref(true)
 
+const renderMarkdown = async (id: number, content: string) => {
+  loading.value = true
 
-const md = await createMarkdownRenderer()
-onMounted(async () => {
-  renderedHtml.value = md.renderAsync(blogStore.blogContent)
+  if (!md.value) {
+    md.value = await createMarkdownRenderer()
+  }
+
+  // 加个防抖 delay 的话，也可以防止切换过快闪烁
+  const html = await md.value.renderAsync(content)
+  if (id == blogStore.blogId) {
+    renderedHtml.value = html
+  }
+  loading.value = false
+}
+
+onMounted(() => {
+  console.log("mounted", blogStore.blogId)
+  renderMarkdown(blogStore.blogId, blogStore.blogContent)
 })
 
 watch(() => blogStore.blogContent, () => {
-  renderedHtml.value = md.render(blogStore.blogContent)
+  console.log("watch", blogStore.blogId)
+  renderMarkdown(blogStore.blogId, blogStore.blogContent)
 })
 
 </script>

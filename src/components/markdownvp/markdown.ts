@@ -33,7 +33,21 @@ import { imagePlugin, type Options as ImageOptions } from './plugins/image'
 import { lineNumberPlugin } from './plugins/lineNumbers'
 import { preWrapperPlugin } from './plugins/preWrapper'
 import { restoreEntities } from './plugins/restoreEntities'
+import { Buffer } from 'buffer';
 
+// css
+import '@/styles/vitepress/vars.css'
+import '@/styles/vitepress/base.css'
+import '@/styles/vitepress/utils.css'
+import '@/styles/vitepress/vars.css'
+import '@/styles/vitepress/icons.css'
+import '@/styles/vitepress/components/custom-block.css'
+import '@/styles/vitepress/components/vp-code.css'
+import '@/styles/vitepress/components/vp-doc.css'
+import '@/styles/vitepress/components/vp-code-group.css'
+
+// @ts-ignore
+window.Buffer = Buffer;
 export type Awaitable<T> = T | PromiseLike<T>
 
 export type ThemeOptions =

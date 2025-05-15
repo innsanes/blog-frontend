@@ -21,6 +21,7 @@
     "@mdit-vue/shared": "^2.1.4",
     "@shikijs/transformers": "^3.4.1",
     "axios": "^1.7.5",
+    "buffer": "^6.0.3",
     "crypto-browserify": "^3.12.1",
     "element-plus": "^2.8.1",
     "github-markdown-css": "^5.6.1",
