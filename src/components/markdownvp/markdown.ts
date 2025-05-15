@@ -33,6 +33,7 @@ import { imagePlugin, type Options as ImageOptions } from './plugins/image'
 import { lineNumberPlugin } from './plugins/lineNumbers'
 import { preWrapperPlugin } from './plugins/preWrapper'
 import { restoreEntities } from './plugins/restoreEntities'
+import mermaidPlugin from "@agoose77/markdown-it-mermaid";
 import { Buffer } from 'buffer';
 
 // css
@@ -243,6 +244,7 @@ export async function createMarkdownRenderer(
   const slugify = options.anchor?.slugify ?? defaultSlugify
 
   // custom plugins
+  md.use(mermaidPlugin)
   md.use(highlightLinePlugin)
     .use(preWrapperPlugin, { codeCopyButtonTitle })
     .use(containerPlugin, options.container)

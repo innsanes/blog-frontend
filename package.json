@@ -12,6 +12,7 @@
     "docs:preview": "vitepress preview docs"
   },
   "dependencies": {
+    "@agoose77/markdown-it-mermaid": "^1.1.0",
     "@mdit-vue/plugin-component": "^2.1.4",
     "@mdit-vue/plugin-frontmatter": "^2.1.4",
     "@mdit-vue/plugin-headers": "^2.1.4",
@@ -34,8 +35,10 @@
     "markdown-it-emoji": "^3.0.0",
     "markdown-it-highlight": "^0.2.0",
     "markdown-it-mathjax3": "^4.3.2",
+    "markdown-it-mermaid": "^0.2.5",
     "markdown-it-toc-done-right": "^4.2.0",
     "md-editor-v3": "^4.19.2",
+    "mermaid": "^11.6.0",
     "pinia": "^2.2.2",
     "pinia-plugin-persistedstate": "^3.2.3",
     "pnpm": "^10.11.0",
