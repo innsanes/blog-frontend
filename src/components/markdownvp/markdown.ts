@@ -33,7 +33,8 @@ import { imagePlugin, type Options as ImageOptions } from './plugins/image'
 import { lineNumberPlugin } from './plugins/lineNumbers'
 import { preWrapperPlugin } from './plugins/preWrapper'
 import { restoreEntities } from './plugins/restoreEntities'
-import mermaidPlugin from "@agoose77/markdown-it-mermaid";
+import {mermaidPlugin} from './plugins/mermaid'
+
 import { Buffer } from 'buffer';
 
 // css
@@ -49,6 +50,169 @@ import '@/styles/vitepress/components/vp-code-group.css'
 
 // @ts-ignore
 window.Buffer = Buffer;
+
+export type MarkdownRenderer = MarkdownItAsync
+
+let md: MarkdownRenderer | undefined
+let _disposeHighlighter: (() => void) | undefined
+
+export function disposeMdItInstance() {
+  if (md) {
+    md = undefined
+    _disposeHighlighter?.()
+  }
+}
+
+/**
+ * @experimental
+ */
+export async function createMarkdownRenderer(
+  options: MarkdownOptions = {},
+  logger: Pick<Logger, 'warn'> = console
+): Promise<MarkdownRenderer> {
+  if (md) return md
+
+  const theme = options.theme ?? { light: 'github-light', dark: 'github-dark' }
+  const codeCopyButtonTitle = options.codeCopyButtonTitle || 'Copy Code'
+
+  let [highlight, dispose] = options.highlight
+    ? [options.highlight, () => {}]
+    : await createHighlighter(theme, options, logger)
+
+  _disposeHighlighter = dispose
+
+  md = new MarkdownItAsync({ html: true, linkify: true, highlight, ...options })
+
+  md.linkify.set({ fuzzyLink: false })
+  md.use(restoreEntities)
+
+  if (options.preConfig) {
+    await options.preConfig(md)
+  }
+
+  const slugify = options.anchor?.slugify ?? defaultSlugify
+
+  // custom plugins
+  
+  md.use(mermaidPlugin, {
+    "theme": "classic",
+    "look": "handDrawn",
+    "handDrawnSeed": true,
+  })
+  md.use(highlightLinePlugin)
+    .use(preWrapperPlugin, { codeCopyButtonTitle })
+    .use(containerPlugin, options.container)
+    .use(imagePlugin, options.image)
+    .use(lineNumberPlugin, options.lineNumbers)
+
+  const tableOpen = md.renderer.rules.table_open
+  md.renderer.rules.table_open = function (tokens, idx, options, env, self) {
+    const token = tokens[idx]
+    if (token.attrIndex('tabindex') < 0) token.attrPush(['tabindex', '0'])
+    return tableOpen
+      ? tableOpen(tokens, idx, options, env, self)
+      : self.renderToken(tokens, idx, options)
+  }
+
+  if (options.gfmAlerts !== false) {
+    md.use(gitHubAlertsPlugin)
+  }
+
+  // third party plugins
+  if (!options.attrs?.disable) {
+    md.use(attrsPlugin, options.attrs)
+  }
+  md.use(emojiPlugin, { ...options.emoji })
+
+  // mdit-vue plugins
+  md.use(anchorPlugin, {
+    slugify,
+    getTokensText: (tokens) => {
+      return tokens
+        .filter((t) => !['html_inline', 'emoji'].includes(t.type))
+        .map((t) => t.content)
+        .join('')
+    },
+    permalink: (slug, _, state, idx) => {
+      const title =
+        state.tokens[idx + 1]?.children
+          ?.filter((token) => ['text', 'code_inline'].includes(token.type))
+          .reduce((acc, t) => acc + t.content, '')
+          .trim() || ''
+
+      const linkTokens = [
+        Object.assign(new state.Token('text', '', 0), { content: ' ' }),
+        Object.assign(new state.Token('link_open', 'a', 1), {
+          attrs: [
+            ['class', 'header-anchor'],
+            ['href', `#${slug}`],
+            ['aria-label', `Permalink to “${title}”`]
+          ]
+        }),
+        Object.assign(new state.Token('html_inline', '', 0), {
+          content: '&#8203;',
+          meta: { isPermalinkSymbol: true }
+        }),
+        new state.Token('link_close', 'a', -1)
+      ]
+
+      state.tokens[idx + 1].children?.push(...linkTokens)
+    },
+    ...options.anchor
+  } as anchorPlugin.AnchorOptions).use(frontmatterPlugin, {
+    ...options.frontmatter
+  } as FrontmatterPluginOptions)
+
+  if (options.headers) {
+    md.use(headersPlugin, {
+      level: [2, 3, 4, 5, 6],
+      slugify,
+      ...(typeof options.headers === 'boolean' ? undefined : options.headers)
+    } as HeadersPluginOptions)
+  }
+
+  md.use(sfcPlugin, {
+    ...options.sfc
+  } as SfcPluginOptions)
+    .use(titlePlugin)
+    .use(tocPlugin, {
+      slugify,
+      ...options.toc
+    } as TocPluginOptions)
+
+  if (options.math) {
+    try {
+      const mathPlugin = await import('markdown-it-mathjax3')
+      md.use(mathPlugin.default ?? mathPlugin, {
+        ...(typeof options.math === 'boolean' ? {} : options.math)
+      })
+      const origMathInline = md.renderer.rules.math_inline!
+      md.renderer.rules.math_inline = function (...args) {
+        return origMathInline
+          .apply(this, args)
+          .replace(/^<mjx-container /, '<mjx-container v-pre ')
+      }
+      const origMathBlock = md.renderer.rules.math_block!
+      md.renderer.rules.math_block = function (...args) {
+        return origMathBlock
+          .apply(this, args)
+          .replace(/^<mjx-container /, '<mjx-container v-pre tabindex="0" ')
+      }
+    } catch (error) {
+      throw new Error(
+        'You need to install `markdown-it-mathjax3` to use math support.'
+      )
+    }
+  }
+
+  // apply user config
+  if (options.config) {
+    await options.config(md)
+  }
+
+  return md
+}
+
 export type Awaitable<T> = T | PromiseLike<T>
 
 export type ThemeOptions =
@@ -200,161 +364,4 @@ export interface MarkdownOptions extends Options {
    * @see https://vitepress.dev/guide/markdown#github-flavored-alerts
    */
   gfmAlerts?: boolean
-}
-
-export type MarkdownRenderer = MarkdownItAsync
-
-let md: MarkdownRenderer | undefined
-let _disposeHighlighter: (() => void) | undefined
-
-export function disposeMdItInstance() {
-  if (md) {
-    md = undefined
-    _disposeHighlighter?.()
-  }
-}
-
-/**
- * @experimental
- */
-export async function createMarkdownRenderer(
-  options: MarkdownOptions = {},
-  logger: Pick<Logger, 'warn'> = console
-): Promise<MarkdownRenderer> {
-  if (md) return md
-
-  const theme = options.theme ?? { light: 'github-light', dark: 'github-dark' }
-  const codeCopyButtonTitle = options.codeCopyButtonTitle || 'Copy Code'
-
-  let [highlight, dispose] = options.highlight
-    ? [options.highlight, () => {}]
-    : await createHighlighter(theme, options, logger)
-
-  _disposeHighlighter = dispose
-
-  md = new MarkdownItAsync({ html: true, linkify: true, highlight, ...options })
-
-  md.linkify.set({ fuzzyLink: false })
-  md.use(restoreEntities)
-
-  if (options.preConfig) {
-    await options.preConfig(md)
-  }
-
-  const slugify = options.anchor?.slugify ?? defaultSlugify
-
-  // custom plugins
-  md.use(mermaidPlugin)
-  md.use(highlightLinePlugin)
-    .use(preWrapperPlugin, { codeCopyButtonTitle })
-    .use(containerPlugin, options.container)
-    .use(imagePlugin, options.image)
-    .use(lineNumberPlugin, options.lineNumbers)
-
-  const tableOpen = md.renderer.rules.table_open
-  md.renderer.rules.table_open = function (tokens, idx, options, env, self) {
-    const token = tokens[idx]
-    if (token.attrIndex('tabindex') < 0) token.attrPush(['tabindex', '0'])
-    return tableOpen
-      ? tableOpen(tokens, idx, options, env, self)
-      : self.renderToken(tokens, idx, options)
-  }
-
-  if (options.gfmAlerts !== false) {
-    md.use(gitHubAlertsPlugin)
-  }
-
-  // third party plugins
-  if (!options.attrs?.disable) {
-    md.use(attrsPlugin, options.attrs)
-  }
-  md.use(emojiPlugin, { ...options.emoji })
-
-  // mdit-vue plugins
-  md.use(anchorPlugin, {
-    slugify,
-    getTokensText: (tokens) => {
-      return tokens
-        .filter((t) => !['html_inline', 'emoji'].includes(t.type))
-        .map((t) => t.content)
-        .join('')
-    },
-    permalink: (slug, _, state, idx) => {
-      const title =
-        state.tokens[idx + 1]?.children
-          ?.filter((token) => ['text', 'code_inline'].includes(token.type))
-          .reduce((acc, t) => acc + t.content, '')
-          .trim() || ''
-
-      const linkTokens = [
-        Object.assign(new state.Token('text', '', 0), { content: ' ' }),
-        Object.assign(new state.Token('link_open', 'a', 1), {
-          attrs: [
-            ['class', 'header-anchor'],
-            ['href', `#${slug}`],
-            ['aria-label', `Permalink to “${title}”`]
-          ]
-        }),
-        Object.assign(new state.Token('html_inline', '', 0), {
-          content: '&#8203;',
-          meta: { isPermalinkSymbol: true }
-        }),
-        new state.Token('link_close', 'a', -1)
-      ]
-
-      state.tokens[idx + 1].children?.push(...linkTokens)
-    },
-    ...options.anchor
-  } as anchorPlugin.AnchorOptions).use(frontmatterPlugin, {
-    ...options.frontmatter
-  } as FrontmatterPluginOptions)
-
-  if (options.headers) {
-    md.use(headersPlugin, {
-      level: [2, 3, 4, 5, 6],
-      slugify,
-      ...(typeof options.headers === 'boolean' ? undefined : options.headers)
-    } as HeadersPluginOptions)
-  }
-
-  md.use(sfcPlugin, {
-    ...options.sfc
-  } as SfcPluginOptions)
-    .use(titlePlugin)
-    .use(tocPlugin, {
-      slugify,
-      ...options.toc
-    } as TocPluginOptions)
-
-  if (options.math) {
-    try {
-      const mathPlugin = await import('markdown-it-mathjax3')
-      md.use(mathPlugin.default ?? mathPlugin, {
-        ...(typeof options.math === 'boolean' ? {} : options.math)
-      })
-      const origMathInline = md.renderer.rules.math_inline!
-      md.renderer.rules.math_inline = function (...args) {
-        return origMathInline
-          .apply(this, args)
-          .replace(/^<mjx-container /, '<mjx-container v-pre ')
-      }
-      const origMathBlock = md.renderer.rules.math_block!
-      md.renderer.rules.math_block = function (...args) {
-        return origMathBlock
-          .apply(this, args)
-          .replace(/^<mjx-container /, '<mjx-container v-pre tabindex="0" ')
-      }
-    } catch (error) {
-      throw new Error(
-        'You need to install `markdown-it-mathjax3` to use math support.'
-      )
-    }
-  }
-
-  // apply user config
-  if (options.config) {
-    await options.config(md)
-  }
-
-  return md
 }

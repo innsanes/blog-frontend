@@ -14,6 +14,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
 import { useBlogStore } from '../stores/blog'
+import { renderMermaidSSE } from './markdownvp/plugins/mermaid'
 import {createMarkdownRenderer} from './markdownvp/markdown'
 
 const blogStore = useBlogStore()
@@ -33,6 +34,7 @@ const renderMarkdown = async (id: number, content: string) => {
   if (id == blogStore.blogId) {
     renderedHtml.value = html
   }
+  renderMermaidSSE()
   loading.value = false
 }
 
