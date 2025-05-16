@@ -1,14 +1,9 @@
 <template>
-    <div class="blog">
-        <h1>{{ blogStore.blogName }}</h1>
-        <p class="author">Innsane</p>
-        <div class="edit-link">
-            <RouterLink v-if="userStore.token != ''" :to="getBlogEditRouter()">
-                Edit
-            </RouterLink>
-        </div>
-        <el-divider />
-        <MarkdownPreview :mdContent="blogStore.content" />
+    <MarkdownPreview :mdContent="blogStore.content" />
+    <div class="edit-link">
+        <RouterLink v-if="userStore.token != ''" :to="getBlogEditRouter()">
+            Edit
+        </RouterLink>
     </div>
 </template>
 
@@ -50,26 +45,3 @@ onMounted(() => {
     }
 })
 </script>
-
-<style scoped>
-h1 {
-  margin-bottom: 20px;
-  text-align: center;
-}
-
-.author {
-  color: #888;
-  margin-bottom: 20px;
-  text-align: right;
-}
-
-.blog {
-    max-width: 800px;
-    width: 100%;
-    margin: 0 auto;
-    padding: 20px;
-}
-.edit-link {
-    text-align: right;
-}
-</style>

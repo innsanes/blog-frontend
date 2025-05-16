@@ -175,8 +175,12 @@ export async function createMarkdownRenderer(
     ...options.sfc
   } as SfcPluginOptions)
     .use(titlePlugin)
-    .use(tocPlugin, {
+  
+    md.use(tocPlugin, {
       slugify,
+      containerClass: "VPDocAsideOutline has-outline",
+      listClass: "VPDocOutlineItem nested",
+      linkClass: "outline-link",
       ...options.toc
     } as TocPluginOptions)
 
