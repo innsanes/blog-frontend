@@ -1,99 +1,185 @@
 <template>
-    <!-- <el-button type="primary" @click="createNewBlog"></el-button> -->
-    <el-button @click="buttonClick" class="menu-button">Menu</el-button>
-    <el-drawer
-      v-model="drawerVisible"
-      title="Menu"
-      direction="ltr"
-      size="200px"
-      custom-class="nav-drawer"
-    >
-        <el-menu
-        class="el-menu-vertical-demo"
-        :collapse="isCollapse"
-        >
-            <el-menu-item index="1">
-                <template #title>
-                    <RouterLink @click="closeDrawer" to="/">Home</RouterLink>
-                </template>
-            </el-menu-item>
-            <el-menu-item v-if="!userStore.isLogin" index="2">
-            <template #title>
-                <RouterLink @click="closeDrawer" to="/login">Login</RouterLink>
-            </template>
-            </el-menu-item>
-            <el-menu-item v-if="userStore.isLogin" index="3">
-            <template #title>
-                <RouterLink  @click="closeDrawer" to="/blog/edit/0">NewBlog</RouterLink>
-            </template>
-            </el-menu-item>
-        </el-menu>
-    </el-drawer>
+  <div class="VPNavBar top">
+    <div class="wrapper">
+      <div class="container">
+        <!-- 左侧 Logo 和标题 -->
+        <div class="title">
+          <RouterLink class="VPNavBarTitle title" to="/">
+            <img class="VPImage logo" src="@/assets/tangram_2.png" width="24" height="24" alt="">
+            <span>Innsane Blog</span>
+          </RouterLink>
+        </div>
+
+        <!-- 右侧导航内容 -->
+        <div class="content">
+          <div class="content-body">
+            <!-- 导航菜单 -->
+            <nav class="VPNavBarMenu menu">
+              <RouterLink 
+                class="VPLink link VPNavBarMenuLink" 
+                active-class="active"
+                to="/"
+              >
+                首页
+              </RouterLink>
+              
+              <RouterLink
+                v-if="!userStore.isLogin"
+                class="VPLink link VPNavBarMenuLink"
+                active-class="active"
+                to="/login"
+              >
+                登录
+              </RouterLink>
+
+              <RouterLink
+                v-if="userStore.isLogin"
+                class="VPLink link VPNavBarMenuLink"
+                active-class="active"
+                to="/blog/edit/0"
+                @click="routerCreateNew"
+              >
+                新建文章
+              </RouterLink>
+            </nav>
+
+            <!-- 右侧功能区 -->
+            <div class="VPNavBarExtra">
+              <!-- 主题切换 -->
+              <button class="VPSwitch VPSwitchAppearance">
+                <span class="check">
+                  <span class="icon">
+                    <span class="vpi-sun"></span>
+                    <span class="vpi-moon"></span>
+                  </span>
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 底部装饰线 -->
+    <div class="divider">
+      <div class="divider-line"></div>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { RouterLink } from 'vue-router'
 import { useUserStore } from '../stores/user'
 import { useBlogStore } from '../stores/blog'
-import { useRouter} from 'vue-router'
+import { useRouter } from 'vue-router'
 
 const router = useRouter()
 const userStore = useUserStore()
 const blogStore = useBlogStore()
-const drawerVisible = ref(false)
-const isCollapse = ref(false)
-const buttonClick = () => {
-    drawerVisible.value = true
-}
-
-const closeDrawer = () => {
-    drawerVisible.value = false
-}
 
 const routerCreateNew = () => {
-    closeDrawer()
-    blogStore.blogId = 0
-    blogStore.blogName = ''
-    blogStore.blogContent = ''
-    router.push('/blog/edit/0')
+  blogStore.blogId = 0
+  blogStore.blogName = ''
+  blogStore.blogContent = ''
+  router.push('/blog/edit/0')
 }
-
 </script>
 
 <style scoped>
-.menu-button {
+/* 复用 VitePress 样式结构 */
+.VPNavBar {
   position: fixed;
-  top: 20px;
-  left: 20px;
+  top: 0;
+  left: 0;
+  right: 0;
   z-index: 1000;
-  background-color: #409eff;
-  color: #fff;
-  border-radius: 8px;
-  padding: 10px 20px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: saturate(50%) blur(8px);
+  transition: background-color 0.5s;
 }
 
-.nav-drawer {
-  background-color: #fff;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+.wrapper {
+  padding: 0 32px;
 }
 
-.el-menu-vertical-demo {
-  border-right: none;
+.container {
+  display: flex;
+  justify-content: space-between;
+  margin: 0 auto;
+  max-width: 1440px;
 }
 
-.el-menu-item {
-  border-radius: 8px;
-  margin: 5px 0;
-  overflow: hidden;
+.title {
+  display: flex;
+  align-items: center;
+  height: var(--vp-nav-height);
 }
 
-.el-menu-item:hover {
-  background-color: #f5f5f5;
+.VPNavBarTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--vp-c-text-1);
 }
 
-.el-menu-item .el-menu-item__title {
-  padding: 10px 20px;
+.content {
+  flex-grow: 1;
+  height: var(--vp-nav-height);
+}
+
+.content-body {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  height: 100%;
+}
+
+.VPNavBarMenu {
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+.VPLink {
+  position: relative;
+  display: block;
+  padding: 0 12px;
+  line-height: var(--vp-nav-height);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--vp-c-text-2);
+  transition: color 0.25s;
+}
+
+.VPLink.active {
+  color: var(--vp-c-brand);
+}
+
+.VPLink:hover {
+  color: var(--vp-c-text-1);
+}
+
+.VPSwitchAppearance {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  transition: background-color 0.25s;
+}
+
+.divider-line {
+  height: 1px;
+  background-color: var(--vp-c-divider);
+  transition: background-color 0.5s;
+}
+
+@media (max-width: 768px) {
+  .VPNavBarMenu {
+    display: none;
+  }
+  
+  .wrapper {
+    padding: 0 16px;
+  }
 }
 </style>

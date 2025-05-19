@@ -1,5 +1,5 @@
 <template>
-  <h1> BlogEdit </h1>
+  <div style="margin-top: 80px;"></div>
   <el-input
     v-model="blogStore.blogName"
     style="width: 240px"
