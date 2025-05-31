@@ -1,7 +1,7 @@
 <template>
   <div class="VPDoc has-aside" v-if="!loading">
     <div class="container" >
-      <div class="aside left-aside" v-if="emptyHeader">
+      <div class="aside" v-if="emptyHeader">
         <div class="aside-curtain"></div>
         <div class="aside-container">
           <div class="aside-content VPDocAside" v-html="renderedTOCHtml"></div>
@@ -128,12 +128,6 @@ watch(() => blogStore.blogContent, () => {
   padding-left: 32px;
   width: 100%;
   max-width: 256px;
-}
-
-.left-aside {
-  order: 1;
-  padding-left: unset;
-  padding-right: 32px;
 }
 
 .aside-container {
@@ -270,8 +264,8 @@ watch(() => blogStore.blogContent, () => {
 
 ::v-deep(.aside-content) {
   position: relative;
-  border-right: 1px solid var(--vp-c-divider);
-  padding-right: 16px;
+  border-left: 1px solid var(--vp-c-divider);
+  padding-left: 16px;
   font-size: 13px;
   font-weight: 500;
 }

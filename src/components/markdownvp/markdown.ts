@@ -3,10 +3,6 @@ import {
   type ComponentPluginOptions
 } from '@mdit-vue/plugin-component'
 import {
-  frontmatterPlugin,
-  type FrontmatterPluginOptions
-} from '@mdit-vue/plugin-frontmatter'
-import {
   headersPlugin,
   type HeadersPluginOptions
 } from '@mdit-vue/plugin-headers'
@@ -41,7 +37,6 @@ import { Buffer } from 'buffer';
 import '@/styles/vitepress/vars.css'
 import '@/styles/vitepress/base.css'
 import '@/styles/vitepress/utils.css'
-import '@/styles/vitepress/vars.css'
 import '@/styles/vitepress/icons.css'
 import '@/styles/vitepress/components/custom-block.css'
 import '@/styles/vitepress/components/vp-code.css'
@@ -146,7 +141,7 @@ export async function createMarkdownRenderer(
           attrs: [
             ['class', 'header-anchor'],
             ['href', `#${slug}`],
-            ['aria-label', `Permalink to “${title}”`]
+            ['aria-label', `Permalink to " ${title} "`]
           ]
         }),
         Object.assign(new state.Token('html_inline', '', 0), {
@@ -159,9 +154,7 @@ export async function createMarkdownRenderer(
       state.tokens[idx + 1].children?.push(...linkTokens)
     },
     ...options.anchor
-  } as anchorPlugin.AnchorOptions).use(frontmatterPlugin, {
-    ...options.frontmatter
-  } as FrontmatterPluginOptions)
+  } as anchorPlugin.AnchorOptions)
 
   if (options.headers) {
     md.use(headersPlugin, {
@@ -176,13 +169,14 @@ export async function createMarkdownRenderer(
   } as SfcPluginOptions)
     .use(titlePlugin)
   
-    md.use(tocPlugin, {
-      slugify,
-      containerClass: "VPDocAsideOutline has-outline",
-      listClass: "VPDocOutlineItem nested",
-      linkClass: "outline-link",
-      ...options.toc
-    } as TocPluginOptions)
+  md.use(tocPlugin, {
+    slugify,
+    containerClass: "VPDocAsideOutline has-outline",
+    listClass: "VPDocOutlineItem nested",
+    linkClass: "outline-link",
+    level: [2],
+    ...options.toc
+  } as TocPluginOptions)
 
   if (options.math) {
     try {

@@ -32,10 +32,7 @@ export const mermaidPlugin = (md: MarkdownIt, options: MermaidConfig = {}) => {
     const encodedContent = encodeURIComponent(content)
 
     if (cache.has(hash)) {
-      return `
-        ${ defaultFence(tokens, idx, opts, env, self) }
-        <div data-mermaid-hash="${ hash }">${ cache.get(hash) }</div>
-      `
+      return `<div data-mermaid-hash="${ hash }">${ cache.get(hash) }</div>`
     }
 
     return `
