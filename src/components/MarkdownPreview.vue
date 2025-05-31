@@ -21,6 +21,7 @@ import { ref, onMounted, watch } from 'vue'
 import { useBlogStore } from '../stores/blog'
 import { renderMermaidSSE } from './markdownvp/plugins/mermaid'
 import {createMarkdownRenderer} from './markdownvp/markdown'
+import { useCopyCode } from './markdownvp/copyCode'
 
 const blogStore = useBlogStore()
 const renderedContentHtml = ref<string>('')
@@ -54,12 +55,11 @@ const renderMarkdown = async (id: number, title: string, content: string) => {
 }
 
 onMounted(() => {
-  console.log("mounted", blogStore.blogId)
+  useCopyCode()
   renderMarkdown(blogStore.blogId, blogStore.blogName, blogStore.blogContent)
 })
 
 watch(() => blogStore.blogContent, () => {
-  console.log("watch", blogStore.blogId)
   renderMarkdown(blogStore.blogId, blogStore.blogName, blogStore.blogContent)
 })
 
