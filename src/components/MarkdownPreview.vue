@@ -4,7 +4,17 @@
       <div class="aside" v-if="emptyHeader">
         <div class="aside-curtain"></div>
         <div class="aside-container">
-          <div class="aside-content VPDocAside" v-html="renderedTOCHtml"></div>
+          <div class="aside-content VPDocAside">
+            <nav aria-labelledby="doc-outline-aria-label" class="VPDocAsideOutline has-outline" ref="container">
+                <div class="content">
+                <div class="outline-marker" ref="marker" />
+                <div aria-level="2" class="outline-title" id="doc-outline-aria-label" role="heading">
+                  On this page
+                </div>
+                <MarkdownOutline :headers :root="true" />
+              </div>
+            </nav>
+          </div>
         </div>
       </div>
       <div class="content" >
@@ -17,12 +27,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, nextTick } from 'vue'
+import { ref, onMounted, watch, nextTick, shallowRef} from 'vue'
 import { useBlogStore } from '../stores/blog'
 import { renderMermaidSSE } from './markdownvp/plugins/mermaid'
 import {createMarkdownRenderer} from './markdownvp/markdown'
 import { useCopyCode } from './markdownvp/copyCode'
-import { getHeaders, useActiveAnchor } from './markdownvp/outline'
+import { getHeaders, useActiveAnchor, type OutlineItem } from './markdownvp/outline'
+import MarkdownOutline from './MarkdownOutline.vue'
 
 const blogStore = useBlogStore()
 const renderedContentHtml = ref<string>('')
@@ -30,6 +41,12 @@ const renderedTOCHtml = ref<string>('')
 const md = ref<any>(null)
 const emptyHeader = ref(true)
 const loading = ref(true)
+const container = ref()
+const marker = ref()
+const headers = shallowRef<OutlineItem[]>([])
+
+// Call useActiveAnchor at the top level of setup
+useActiveAnchor(container, marker)
  
 const renderMarkdown = async (id: number, title: string, content: string) => {
   loading.value = true
@@ -55,11 +72,21 @@ const renderMarkdown = async (id: number, title: string, content: string) => {
   loading.value = false
 
   await nextTick();
-  console.log(tocHtml)
-  console.log("mounted", getHeaders([2, 3]))
+  headers.value = getHeaders([2, 2])
+  // No longer call useActiveAnchor here
+  // if (!container.value || !marker.value) {
+  //   return
+  // }
+  // console.log('MarkdownPreview onMounted');
+  // console.log('container ref:', container.value);
+  // console.log('marker ref:', marker.value);
+  // useActiveAnchor(container, marker)
 }
 
 onMounted(() => {
+  // console.log('MarkdownPreview onMounted') // Redundant, useActiveAnchor has its own onMounted
+  // console.log('container ref:', container.value) // These will be null here, before child components are mounted
+  // console.log('marker ref:', marker.value)
   useCopyCode()
   renderMarkdown(blogStore.blogId, blogStore.blogName, blogStore.blogContent)
 })
@@ -270,7 +297,6 @@ watch(() => blogStore.blogContent, () => {
 ::v-deep(.aside-content) {
   position: relative;
   border-left: 1px solid var(--vp-c-divider);
-  padding-left: 16px;
   font-size: 13px;
   font-weight: 500;
 }
