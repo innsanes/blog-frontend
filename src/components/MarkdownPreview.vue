@@ -17,11 +17,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, nextTick } from 'vue'
 import { useBlogStore } from '../stores/blog'
 import { renderMermaidSSE } from './markdownvp/plugins/mermaid'
 import {createMarkdownRenderer} from './markdownvp/markdown'
 import { useCopyCode } from './markdownvp/copyCode'
+import { getHeaders, useActiveAnchor } from './markdownvp/outline'
 
 const blogStore = useBlogStore()
 const renderedContentHtml = ref<string>('')
@@ -52,6 +53,10 @@ const renderMarkdown = async (id: number, title: string, content: string) => {
   // blogStore.blogHeaders = getHeaders()
   renderMermaidSSE()
   loading.value = false
+
+  await nextTick();
+  console.log(tocHtml)
+  console.log("mounted", getHeaders([2, 3]))
 }
 
 onMounted(() => {
