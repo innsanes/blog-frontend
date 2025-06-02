@@ -126,7 +126,7 @@ watch(() => blogStore.blogContent, () => {
   }
 }
 
-@media (min-width: 1280px) {
+@media (min-width: 1080px) {
   .VPDoc .container {
     display: flex;
     justify-content: center;
@@ -206,7 +206,7 @@ watch(() => blogStore.blogContent, () => {
   }
 }
 
-@media (min-width: 1280px) {
+@media (min-width: 1080px) {
   .content {
     order: 1;
     margin: 0;
@@ -225,6 +225,7 @@ watch(() => blogStore.blogContent, () => {
 .VPContent {
   flex-grow: 1;
   flex-shrink: 0;
+  padding-top: var(--vp-nav-height);
   margin: var(--vp-layout-top-height, 0px) auto 0;
   width: 100%;
 }
