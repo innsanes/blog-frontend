@@ -1,5 +1,5 @@
 <template>
-  <div class="VPNavBar top">
+  <div class="VPNavBar">
     <div class="wrapper">
       <div class="container">
         <!-- 左侧 Logo 和标题 -->
@@ -10,59 +10,42 @@
           </RouterLink>
         </div>
 
-        <!-- 右侧导航内容 -->
         <div class="content">
           <div class="content-body">
-            <!-- 导航菜单 -->
-            <nav class="VPNavBarMenu menu">
-              <RouterLink 
-                class="VPLink link VPNavBarMenuLink" 
-                active-class="active"
-                to="/"
-              >
-                首页
-              </RouterLink>
-              
-              <RouterLink
-                v-if="!userStore.isLogin"
-                class="VPLink link VPNavBarMenuLink"
-                active-class="active"
-                to="/login"
-              >
-                登录
-              </RouterLink>
+            <RouterLink 
+              class="VPLink link VPNavBarMenuLink" 
+              active-class="active"
+              to="/"
+            >
+              首页
+            </RouterLink>
+            
+            <RouterLink
+              v-if="!userStore.isLogin"
+              class="VPLink link VPNavBarMenuLink"
+              active-class="active"
+              to="/login"
+            >
+              登录
+            </RouterLink>
 
-              <RouterLink
-                v-if="userStore.isLogin"
-                class="VPLink link VPNavBarMenuLink"
-                active-class="active"
-                to="/blog/edit/0"
-                @click="routerCreateNew"
-              >
-                新建文章
-              </RouterLink>
-            </nav>
-
-            <!-- 右侧功能区 -->
-            <div class="VPNavBarExtra">
-              <!-- 主题切换 -->
-              <button class="VPSwitch VPSwitchAppearance">
-                <span class="check">
-                  <span class="icon">
-                    <span class="vpi-sun"></span>
-                    <span class="vpi-moon"></span>
-                  </span>
-                </span>
-              </button>
-            </div>
+            <RouterLink
+              v-if="userStore.isLogin"
+              class="VPLink link VPNavBarMenuLink"
+              active-class="active"
+              to="/blog/edit/0"
+              @click="routerCreateNew"
+            >
+              新建文章
+            </RouterLink>
+            <VPNavBarAppearance class="appearance" />
           </div>
         </div>
       </div>
     </div>
-    
-    <!-- 底部装饰线 -->
+
     <div class="divider">
-      <div class="divider-line"></div>
+      <div class="divider-line" />
     </div>
   </div>
 </template>
