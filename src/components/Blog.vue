@@ -1,10 +1,5 @@
 <template>
     <MarkdownPreview :mdContent="blogStore.content" />
-    <div class="edit-link">
-        <RouterLink v-if="userStore.token != ''" :to="getBlogEditRouter()">
-            Edit
-        </RouterLink>
-    </div>
 </template>
 
 <script setup lang="ts">
@@ -12,20 +7,11 @@ import { ref, onMounted } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { fetchBlog } from '../api/blog'
 import { useBlogStore } from '../stores/blog';
-import { useUserStore } from '../stores/user'
 import MarkdownPreview from './MarkdownPreview.vue'
 
-const userStore = useUserStore()
 const blogStore = useBlogStore()
 // const blog = ref({ id: 0, name: '', content: '' })
 const route = useRoute()
-
-const getBlogEditRouter = function (id: number) {
-    // blogStore.blogId = id
-    // blogStore.blogName = blog.value.name
-    // blogStore.blogContent = blog.value.content
-    return '/blog/edit/' + blogStore.blogId
-}
 
 const getBlog = async (id: number) => {
     try {

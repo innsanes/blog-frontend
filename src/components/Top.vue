@@ -19,25 +19,6 @@
             >
               首页
             </RouterLink>
-            
-            <RouterLink
-              v-if="!userStore.isLogin"
-              class="VPLink link VPNavBarMenuLink"
-              active-class="active"
-              to="/login"
-            >
-              登录
-            </RouterLink>
-
-            <RouterLink
-              v-if="userStore.isLogin"
-              class="VPLink link VPNavBarMenuLink"
-              active-class="active"
-              to="/blog/edit/0"
-              @click="routerCreateNew"
-            >
-              新建文章
-            </RouterLink>
             <VPNavBarAppearance class="appearance" />
           </div>
         </div>
@@ -51,12 +32,10 @@
 </template>
 
 <script setup lang="ts">
-import { useUserStore } from '../stores/user'
 import { useBlogStore } from '../stores/blog'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
-const userStore = useUserStore()
 const blogStore = useBlogStore()
 
 const routerCreateNew = () => {
