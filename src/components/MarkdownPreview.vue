@@ -9,19 +9,38 @@
                 <div class="content">
                 <div class="outline-marker" ref="marker" />
                 <div aria-level="2" class="outline-title" id="doc-outline-aria-label" role="heading">
-                  On this page
+                  Outline
                 </div>
                 <MarkdownOutline :headers :root="true" />
+                <div class="outline-divider"></div>
                 <div aria-level="2" class="outline-title" id="doc-outline-aria-label" role="heading">
                   Categories
                 </div>
-                <div class="outline-tags" v-if="blogStore.blogCategories && blogStore.blogCategories.length > 0">
+                <div class="outline-categories" v-if="blogStore.blogCategories && blogStore.blogCategories.length > 0">
                   <Category
                     v-for="category in blogStore.blogCategories"
                     :key="category"
                     :category="category"
                   />
                 </div>
+                <div class="outline-divider"></div>
+                <div aria-level="2" class="outline-title" id="doc-outline-aria-label" role="heading">
+                  Information
+                </div>
+                  <div class="outline-info"  id="doc-outline-aria-label" role="heading">
+                   <div class="outline-info-item">
+                     <span class="outline-info-label">View:</span>
+                     <span class="outline-info-value">{{ blogStore.blogView }}</span>
+                   </div>
+                   <div class="outline-info-item">
+                     <span class="outline-info-label">Created:</span>
+                     <span class="outline-info-value">{{ timeFormatDate(blogStore.blogCreateTime) }}</span>
+                   </div>
+                   <div class="outline-info-item">
+                     <span class="outline-info-label">Updated:</span>
+                     <span class="outline-info-value">{{ timeFormatDate(blogStore.blogUpdateTime) }}</span>
+                   </div>
+                 </div>
               </div>
             </nav>
           </div>
@@ -43,9 +62,10 @@ import { useBlogStore } from '../stores/blog'
 import { renderMermaidSSE } from './markdownvp/plugins/mermaid'
 import {createMarkdownRenderer} from './markdownvp/markdown'
 import { useCopyCode } from './markdownvp/copyCode'
-import { getHeaders, useActiveAnchor, type OutlineItem } from './markdownvp/outline'
+import { getHeaders, useActiveAnchor, refreshResolvedHeaders, type OutlineItem } from './markdownvp/outline'
 import MarkdownOutline from './MarkdownOutline.vue'
 import Category from './Category.vue'
+import { timeFormatDate } from '../util/time'
 
 const blogStore = useBlogStore()
 const renderedContentHtml = ref<string>('')
@@ -81,20 +101,24 @@ const renderMarkdown = async (id: number, title: string, content: string) => {
   if (tocHtml === `<nav class="VPDocAsideOutline has-outline"><ul class="VPDocOutlineItem nested"></ul></nav>\n`) [
     emptyHeader.value = false
   ]
-  // blogStore.blogHeaders = getHeaders()
+  
   renderMermaidSSE()
   loading.value = false
 
+  // 等待 DOM 更新完成后再获取 headers
   await nextTick();
+  
+  // 刷新 resolvedHeaders 缓存
+  refreshResolvedHeaders()
+  
+  // 重新获取 headers 并更新
   headers.value = getHeaders([2, 2])
-  // No longer call useActiveAnchor here
-  // if (!container.value || !marker.value) {
-  //   return
-  // }
-  // console.log('MarkdownPreview onMounted');
-  // console.log('container ref:', container.value);
-  // console.log('marker ref:', marker.value);
-  // useActiveAnchor(container, marker)
+  
+  // 延迟一点时间确保 DOM 完全渲染后再触发 active 状态更新
+  setTimeout(() => {
+    // 手动触发一次滚动事件来更新 active 状态
+    window.dispatchEvent(new Event('scroll'))
+  }, 200)
 }
 
 onMounted(() => {
@@ -288,13 +312,13 @@ watch(() => blogStore.blogContent, () => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  transition: color 0.5s;
+  transition: color 0.2s;
 }
 
 ::v-deep(.outline-link:hover),
 ::v-deep(.outline-link.active) {
   color: var(--vp-c-text-1);
-  transition: color 0.25s;
+  transition: color 0.1s;
 }
 
 ::v-deep(.outline-link.nested) {
@@ -327,9 +351,9 @@ watch(() => blogStore.blogContent, () => {
   height: 18px;
   background-color: var(--vp-c-brand-1);
   transition:
-    top 0.25s cubic-bezier(0, 1, 0.5, 1),
-    background-color 0.5s,
-    opacity 0.25s;
+    top 0.15s cubic-bezier(0, 1, 0.5, 1),
+    background-color 0.3s,
+    opacity 0.15s;
 }
 
 ::v-deep(.outline-title) {
@@ -338,11 +362,53 @@ watch(() => blogStore.blogContent, () => {
   font-weight: 600;
 }
 
+/* 分隔符样式 */
+.outline-divider {
+  height: 1px;
+  background-color: var(--vp-c-divider);
+  margin: 16px 0;
+  opacity: 0.6;
+}
+
 /* 分类容器样式 */
-.outline-tags {
+.outline-categories {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 8px;
+}
+
+/* 博客信息样式 */
+.outline-info {
+  margin-top: 8px;
+}
+
+.outline-info-item {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--vp-c-text-2);
+}
+
+.outline-info-label {
+  font-weight: 500;
+  margin-right: 6px;
+}
+
+.outline-info-value {
+  color: var(--vp-c-text-1);
+  font-family: var(--vp-font-family-mono);
+}
+
+/* 修复点击outline时的滚动偏移 */
+.VPContent :where(h1, h2, h3, h4, h5, h6) {
+  scroll-margin-top: var(--vp-nav-height);
+}
+
+/* 确保整个文档区域的滚动行为 */
+html {
+  scroll-padding-top: var(--vp-nav-height);
+  scroll-behavior: smooth;
 }
 </style>

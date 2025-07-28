@@ -1,15 +1,20 @@
 import type { DefaultTheme } from 'vitepress/theme'
 import { onMounted, onUnmounted, onUpdated, type Ref } from 'vue'
 
-const SCROLL_OFFSET = 60; // 您可以根据实际导航栏高度调整此值
+const SCROLL_OFFSET = 64; // 只保留导航栏高度，移除额外的缓冲区
 
 const ignoreRE = /\b(?:VPBadge|header-anchor|footnote-ref|ignore-header)\b/
 
 // cached list of anchor elements from resolveHeaders
 const resolvedHeaders: { element: HTMLHeadElement; link: string }[] = []
 
-// 3. 为 useActiveAnchor 的初始化逻辑添加全局标记
-const OUTLINE_INITIALIZED_KEY = '__OUTLINE_INITIALIZED__'
+// 添加一个函数来清空和重新填充 resolvedHeaders 缓存
+export function refreshResolvedHeaders(): void {
+  resolvedHeaders.length = 0
+  const headers = getHeaders([2, 2])
+  // buildTree 函数会自动填充 resolvedHeaders
+  resolveHeaders(headers, [2, 2])
+}
 
 export function resolveTitle(theme: DefaultTheme.Config): string {
   return (
@@ -84,29 +89,97 @@ export function useActiveAnchor(
   const onScroll = throttleAndDebounce(setActiveLink, 100)
 
   let prevActiveLink: HTMLAnchorElement | null = null
+  let isInitialized = false
 
-  // 确保 onMounted 的逻辑只执行一次
-  if (typeof window !== 'undefined' && !(window as any)[OUTLINE_INITIALIZED_KEY]) {
-    (window as any)[OUTLINE_INITIALIZED_KEY] = true
-
-    onMounted(() => {
-      requestAnimationFrame(setActiveLink)
-      window.addEventListener('scroll', onScroll)
-    })
-
-    onUnmounted(() => {
-      window.removeEventListener('scroll', onScroll)
-      // 可选：如果希望在组件卸载时重置初始化标记（例如，如果 useActiveAnchor 可能在不同实例中多次使用且需要重新初始化）
-      // delete (window as any)[OUTLINE_INITIALIZED_KEY]
-    })
+  // 处理outline链接点击事件
+  function handleOutlineClick(e: MouseEvent) {
+    const target = e.target as HTMLElement
+    const link = target.closest('a[href^="#"]') as HTMLAnchorElement
+    
+    if (link && link.closest('.VPDocAsideOutline')) {
+      e.preventDefault()
+      const hash = link.getAttribute('href')
+      if (hash) {
+        // 立即更新 active 状态
+        activateLink(hash)
+        
+        const targetElement = document.querySelector(hash)
+        if (targetElement) {
+          const top = getAbsoluteTop(targetElement as HTMLElement) - SCROLL_OFFSET
+          
+          // 立即更新滚动位置，然后平滑滚动
+          window.scrollTo({
+            top: Math.max(0, top),
+            behavior: 'smooth'
+          })
+          
+          // 更新URL hash
+          history.pushState(null, '', hash)
+          
+          // 立即触发一次 setActiveLink 来确保状态正确
+          requestAnimationFrame(() => {
+            setActiveLink()
+          })
+          
+          // 添加一个小的延迟来确保滚动过程中的状态更新
+          setTimeout(() => {
+            setActiveLink()
+          }, 50)
+        }
+      }
+    }
   }
 
+  // 初始化函数
+  function initialize() {
+    if (isInitialized) return
+    
+    // 确保容器和标记元素都存在
+    if (!container.value || !marker.value) {
+      // 如果元素还没准备好，延迟初始化
+      requestAnimationFrame(initialize)
+      return
+    }
+
+    isInitialized = true
+    requestAnimationFrame(setActiveLink)
+    window.addEventListener('scroll', onScroll)
+    document.addEventListener('click', handleOutlineClick)
+  }
+
+  // 清理函数
+  function cleanup() {
+    if (!isInitialized) return
+    
+    isInitialized = false
+    window.removeEventListener('scroll', onScroll)
+    document.removeEventListener('click', handleOutlineClick)
+    prevActiveLink = null
+  }
+
+  onMounted(() => {
+    initialize()
+  })
+
+  onUnmounted(() => {
+    cleanup()
+  })
+
   onUpdated(() => {
+    // 当组件更新时，重新初始化以确保事件监听器正确绑定
+    if (!isInitialized) {
+      initialize()
+    }
     // sidebar update means a route change
     activateLink(location.hash)
   })
 
   function setActiveLink() {
+    // 确保容器和标记元素都存在
+    if (!container.value || !marker.value) {
+      return
+    }
+
     const scrollY = window.scrollY
     const innerHeight = window.innerHeight
     const offsetHeight = document.body.offsetHeight
@@ -151,6 +224,11 @@ export function useActiveAnchor(
   }
 
   function activateLink(hash: string | null) {
+    // 确保容器和标记元素都存在
+    if (!container.value || !marker.value) {
+      return
+    }
+
     if (prevActiveLink) {
       prevActiveLink.classList.remove('active')
     }
@@ -165,13 +243,19 @@ export function useActiveAnchor(
 
     const activeLink = prevActiveLink
 
-    if (activeLink && marker.value) { // 确保 marker.value 存在
+    if (activeLink && marker.value) {
       activeLink.classList.add('active')
       marker.value.style.top = activeLink.offsetTop + 39 + 'px'
       marker.value.style.opacity = '1'
-    } else if (marker.value) { // 确保 marker.value 存在
+      
+      // 强制重绘以确保样式立即生效
+      marker.value.offsetHeight
+    } else if (marker.value) {
       marker.value.style.top = '33px'
       marker.value.style.opacity = '0'
+      
+      // 强制重绘以确保样式立即生效
+      marker.value.offsetHeight
     }
   }
 }

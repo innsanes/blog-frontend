@@ -41,6 +41,10 @@ export const useBlogStore = defineStore('blog', {
     blogCategories: (state) => state.currentBlog.categories,
     // 获取当前博客浏览数
     blogView: (state) => state.currentBlog.view,
+    // 获取当前博客创建时间
+    blogCreateTime: (state) => state.currentBlog.createTime,
+    // 获取当前博客修改时间
+    blogUpdateTime: (state) => state.currentBlog.updateTime,
     // 检查是否为新博客
     isNewBlog: (state) => state.currentBlog.id === 0,
   },
