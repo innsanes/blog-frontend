@@ -1,25 +1,27 @@
 <template>
-    <MarkdownPreview :mdContent="blogStore.content" />
+    <MarkdownPreview :mdContent="blogStore.blogContent" />
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { fetchBlog } from '../api/blog'
+import { fetchBlog, type BlogDetail } from '../api/blog'
 import { useBlogStore } from '../stores/blog';
 import MarkdownPreview from './MarkdownPreview.vue'
 
 const blogStore = useBlogStore()
-// const blog = ref({ id: 0, name: '', content: '' })
 const route = useRoute()
 
 const getBlog = async (id: number) => {
     try {
         const response = await fetchBlog(id)
-        blogStore.blogName = response.name
-        blogStore.blogContent = response.content
+        const blogData = response as any;
+        if (blogData && blogData.name && blogData.content) {
+            blogStore.blogName = blogData.name
+            blogStore.blogContent = blogData.content
+        }
     } catch (error) {
-        console.error('Failed to fetch blog:', error)
+        console.error('获取博客失败:', error)
     }
 }
 
