@@ -5,8 +5,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { fetchBlog, type BlogDetail } from '../api/blog'
-import { useBlogStore } from '../stores/blog';
+import { fetchBlog } from '../api/blog'
+import { useBlogStore, type Blog } from '../stores/blog';
 import MarkdownPreview from './MarkdownPreview.vue'
 
 const blogStore = useBlogStore()
@@ -14,22 +14,36 @@ const route = useRoute()
 
 const getBlog = async (id: number) => {
     try {
+        blogStore.setLoading(true)
         const response = await fetchBlog(id)
-        const blogData = response as any;
+        // 由于axios拦截器返回response.data，所以response就是博客数据
+        const blogData = response as unknown as Blog;
+        
         if (blogData && blogData.name && blogData.content) {
-            blogStore.blogName = blogData.name
-            blogStore.blogContent = blogData.content
+            // 使用新的setBlog方法设置完整的博客对象
+            // 确保categories字段存在
+            const safeBlogData: Blog = {
+                ...blogData,
+                categories: blogData.categories || []
+            }
+            blogStore.setBlog(safeBlogData)
         }
     } catch (error) {
         console.error('获取博客失败:', error)
+    } finally {
+        blogStore.setLoading(false)
     }
 }
 
 onMounted(() => {
     const blogId = Number(route.params.id)
     if (blogId !== 0) {
-        blogStore.blogId = blogId
-        getBlog(blogId as number)
+        // 先设置ID，然后获取博客数据
+        blogStore.updateBlog({ id: blogId })
+        getBlog(blogId)
+    } else {
+        // 如果是新博客，重置store
+        blogStore.resetBlog()
     }
 })
 </script>

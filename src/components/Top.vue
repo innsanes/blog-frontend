@@ -39,9 +39,7 @@ const router = useRouter()
 const blogStore = useBlogStore()
 
 const routerCreateNew = () => {
-  blogStore.blogId = 0
-  blogStore.blogName = ''
-  blogStore.blogContent = ''
+  blogStore.resetBlog()
   router.push('/blog/edit/0')
 }
 </script>

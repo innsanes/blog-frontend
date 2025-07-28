@@ -12,6 +12,16 @@
                   On this page
                 </div>
                 <MarkdownOutline :headers :root="true" />
+                <div aria-level="2" class="outline-title" id="doc-outline-aria-label" role="heading">
+                  Categories
+                </div>
+                <div class="outline-tags" v-if="blogStore.blogCategories && blogStore.blogCategories.length > 0">
+                  <Category
+                    v-for="category in blogStore.blogCategories"
+                    :key="category"
+                    :category="category"
+                  />
+                </div>
               </div>
             </nav>
           </div>
@@ -28,18 +38,22 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch, nextTick, shallowRef} from 'vue'
+import { RouterLink } from 'vue-router'
 import { useBlogStore } from '../stores/blog'
 import { renderMermaidSSE } from './markdownvp/plugins/mermaid'
 import {createMarkdownRenderer} from './markdownvp/markdown'
 import { useCopyCode } from './markdownvp/copyCode'
 import { getHeaders, useActiveAnchor, type OutlineItem } from './markdownvp/outline'
 import MarkdownOutline from './MarkdownOutline.vue'
+import Category from './Category.vue'
 
 const blogStore = useBlogStore()
 const renderedContentHtml = ref<string>('')
 const renderedTOCHtml = ref<string>('')
 const md = ref<any>(null)
 const emptyHeader = ref(true)
+
+
 const loading = ref(true)
 const container = ref()
 const marker = ref()
@@ -322,5 +336,13 @@ watch(() => blogStore.blogContent, () => {
   line-height: 32px;
   font-size: 14px;
   font-weight: 600;
+}
+
+/* 分类容器样式 */
+.outline-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
 }
 </style>

@@ -1,5 +1,18 @@
 <template>
   <div class="vp-doc blog-list">
+    <!-- 当前分类过滤显示 -->
+    <div class="category-header" v-if="currentCategory">
+      <span class="category-display">category: {{ currentCategory }}</span>
+      <RouterLink to="/" class="clear-filter">
+        清除过滤
+      </RouterLink>
+    </div>
+    
+    <!-- 博客总数显示 -->
+    <div class="blog-count" v-if="totalCount > 0">
+      共 {{ totalCount }} 篇博客
+    </div>
+    
     <el-table 
       :data="blogs" 
       class="vp-table"
@@ -8,31 +21,21 @@
       <el-table-column prop="name">
         <template #default="scope">
           <div class="blog-item">
-            <RouterLink 
-              class="vp-link blog-title" 
-              :to="blogRouter(scope.row.id)"
-            >
-              {{ scope.row.name }}
-            </RouterLink>
-          </div>
-        </template>
-      </el-table-column>
-      <el-table-column 
-        prop="tags" 
-        width="100"
-        class-name="vp-tags-cell"
-      >
-        <template #default="scope">
-          <div class="blog-tags" v-if="scope.row.tags && scope.row.tags.length > 0">
-            <el-tag
-              v-for="tag in scope.row.tags"
-              :key="tag"
-              size="small"
-              type="info"
-              class="blog-tag"
-            >
-              {{ tag }}
-            </el-tag>
+            <div class="title-with-categories">
+              <RouterLink 
+                class="vp-link blog-title" 
+                :to="blogRouter(scope.row.id)"
+              >
+                {{ scope.row.name }}
+              </RouterLink>
+              <span class="blog-categories" v-if="scope.row.categories && scope.row.categories.length > 0">
+                <Category
+                  v-for="category in scope.row.categories"
+                  :key="category"
+                  :category="category"
+                />
+              </span>
+            </div>
           </div>
         </template>
       </el-table-column>
@@ -52,14 +55,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { bloglist, type BlogListItem, type BlogListParams } from '../api/blog'
-import { useRouter } from 'vue-router'
-import { ElMessage, ElTag } from 'element-plus'
+import { useRouter, useRoute } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import { timeFormatDate } from '../util/time'
+import Category from './Category.vue'
 
 const blogs = ref<BlogListItem[]>([])
 const totalCount = ref<number>(0)
+const currentCategory = ref<string>('')
+const route = useRoute()
 
 const blogRouter = function (id: number) {
   return '/blog/' + id
@@ -68,20 +74,29 @@ const blogRouter = function (id: number) {
 const fetchBlogs = async (params?: BlogListParams) => {
   try {
     const response = await bloglist(params)
+    // 安全处理函数，确保每个博客都有categories字段
+    const safeProcessBlogs = (blogList: any[]) => {
+      return blogList.map(blog => ({
+        ...blog,
+        categories: blog.categories || []
+      }))
+    }
+
     // 根据实际API响应结构调整数据访问路径
     // 如果后端直接返回BlogListResponse结构
     if (response.data.data && response.data.count !== undefined) {
-      blogs.value = response.data.data
+      blogs.value = safeProcessBlogs(response.data.data)
       totalCount.value = response.data.count
     }
     // 如果后端返回被包装的结构（如 {code, data: BlogListResponse, message}）
     else if (response.data && response.data.data && response.data.data.data && response.data.data.count !== undefined) {
-      blogs.value = response.data.data.data
+      blogs.value = safeProcessBlogs(response.data.data.data)
       totalCount.value = response.data.data.count
     }
     // 兜底：保持原有逻辑
     else {
-      blogs.value = response.data?.data || response.data || []
+      const rawData = response.data?.data || response.data || []
+      blogs.value = safeProcessBlogs(rawData)
       totalCount.value = response.data?.count || blogs.value.length
     }
   } catch (error: any) {
@@ -91,15 +106,45 @@ const fetchBlogs = async (params?: BlogListParams) => {
 
 const router = useRouter()
 
+// 加载博客列表（支持多种查询参数）
+const loadBlogs = () => {
+  // 获取所有可能的查询参数
+  const category = route.query.category as string
+  const page = parseInt(route.query.page as string) || undefined
+  const size = parseInt(route.query.size as string) || 10
+  const useCursor = route.query.useCursor === 'true'
+  const cursor = parseInt(route.query.cursor as string) || undefined
+  const forward = route.query.forward === 'true'
+  
+  currentCategory.value = category || ''
+  
+  // 构建API查询参数
+  const params: BlogListParams = { size }
+  
+  if (category) params.category = category
+  if (page !== undefined) params.page = page
+  if (useCursor) {
+    params.useCursor = useCursor
+    if (cursor !== undefined) params.cursor = cursor
+    params.forward = forward
+  }
+  
+  fetchBlogs(params)
+}
+
 onMounted(() => {
-  // 默认获取前10条博客
-  fetchBlogs({ size: 10 })
+  loadBlogs()
 })
+
+// 监听路由查询参数变化
+watch(() => route.query, () => {
+  loadBlogs()
+}, { deep: true })
 
 // 暴露给外部使用的方法
 defineExpose({
   fetchBlogs,
-  refresh: () => fetchBlogs({ size: 10 })
+  refresh: loadBlogs
 })
 </script>
 
@@ -109,6 +154,35 @@ defineExpose({
   max-width: 1024px;
   margin: calc(var(--vp-nav-height) + 24px) auto 0;
   padding: 0 24px;
+}
+
+/* 分类头部显示 */
+.category-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding: 16px 20px;
+  background: var(--vp-c-bg-soft);
+  border-left: 4px solid var(--vp-c-brand);
+  border-radius: 6px;
+}
+
+.category-display {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--vp-c-text-1);
+}
+
+.clear-filter {
+  color: var(--vp-c-text-3);
+  text-decoration: none;
+  font-size: 13px;
+  transition: color 0.25s;
+}
+
+.clear-filter:hover {
+  color: var(--vp-c-brand);
 }
 
 /* 博客数量显示 */
@@ -125,26 +199,26 @@ defineExpose({
   gap: 8px;
 }
 
+/* 标题和分类容器 */
+.title-with-categories {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
 /* 博客标题 */
 .blog-title {
   font-weight: 500;
   line-height: 1.4;
+  flex-shrink: 0;
 }
 
-/* 标签容器 */
-.blog-tags {
+/* 分类标签容器 */
+.blog-categories {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-}
-
-/* 标签样式 */
-.blog-tag {
-  --el-tag-bg-color: var(--vp-c-default-soft);
-  --el-tag-border-color: var(--vp-c-border);
-  --el-tag-text-color: var(--vp-c-text-2);
-  border-radius: 12px;
-  font-size: 12px;
+  align-items: baseline;
 }
 
 /* 表格样式 */
@@ -239,19 +313,6 @@ defineExpose({
     clear: both;
   }
 
-  /* 第二行：标签和时间的容器 */
-  .vp-table :deep(.vp-tags-cell),
-  .vp-table :deep(.vp-time-cell) {
-    display: inline-block;
-    vertical-align: middle;
-  }
-
-  /* 标签单元格 */
-  .vp-table :deep(.vp-tags-cell) {
-    float: left;
-    max-width: 60%;
-  }
-
   /* 时间单元格 */
   .vp-table :deep(.vp-time-cell) {
     float: right;
@@ -266,15 +327,17 @@ defineExpose({
     color: var(--vp-c-text-3);
   }
 
-  /* 标签样式调整 */
-  .blog-tags {
-    margin-top: 0;
-    display: inline-block;
+  /* 移动端：标题和分类垂直布局 */
+  .title-with-categories {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
   }
 
-  .blog-tag {
-    font-size: 11px;
-    margin-right: 4px;
+  /* 分类标签样式调整 */
+  .blog-categories {
+    margin-top: 0;
+    display: flex;
   }
 
   /* 标题样式 */
