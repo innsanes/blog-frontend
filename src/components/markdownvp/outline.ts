@@ -171,7 +171,10 @@ export function useActiveAnchor(
       initialize()
     }
     // sidebar update means a route change
-    activateLink(location.hash)
+    // 延迟一点时间确保 DOM 更新完成
+    setTimeout(() => {
+      activateLink(location.hash)
+    }, 50)
   })
 
   function setActiveLink() {
@@ -260,7 +263,7 @@ export function useActiveAnchor(
   }
 }
 
-function getAbsoluteTop(element: HTMLElement | null): number { // 允许 element 为 null
+export function getAbsoluteTop(element: HTMLElement | null): number { // 允许 element 为 null
   let offsetTop = 0
   while (element && element !== document.body) { // 检查 element 是否为 null
     if (element === null) {

@@ -62,7 +62,7 @@ import { useBlogStore } from '../stores/blog'
 import { renderMermaidSSE } from './markdownvp/plugins/mermaid'
 import {createMarkdownRenderer} from './markdownvp/markdown'
 import { useCopyCode } from './markdownvp/copyCode'
-import { getHeaders, useActiveAnchor, refreshResolvedHeaders, type OutlineItem } from './markdownvp/outline'
+import { getHeaders, useActiveAnchor, refreshResolvedHeaders, getAbsoluteTop, type OutlineItem } from './markdownvp/outline'
 import MarkdownOutline from './MarkdownOutline.vue'
 import Category from './Category.vue'
 import { timeFormatDate } from '../util/time'
@@ -82,6 +82,32 @@ const headers = shallowRef<OutlineItem[]>([])
 // Call useActiveAnchor at the top level of setup
 useActiveAnchor(container, marker)
  
+// 处理 URL hash 滚动定位
+const handleUrlHashScroll = () => {
+  const hash = window.location.hash
+  if (hash) {
+    // 移除开头的 #
+    const targetId = decodeURIComponent(hash.slice(1))
+    const targetElement = document.getElementById(targetId)
+    
+    if (targetElement) {
+      // 使用与点击时相同的计算方法
+      const top = getAbsoluteTop(targetElement as HTMLElement) - 64 // 使用与 SCROLL_OFFSET 相同的值
+      
+      // 平滑滚动到目标位置
+      window.scrollTo({
+        top: Math.max(0, top),
+        behavior: 'smooth'
+      })
+      
+      // 更新 active 状态
+      setTimeout(() => {
+        window.dispatchEvent(new Event('scroll'))
+      }, 100)
+    }
+  }
+}
+
 const renderMarkdown = async (id: number, title: string, content: string) => {
   loading.value = true
 
@@ -118,6 +144,9 @@ const renderMarkdown = async (id: number, title: string, content: string) => {
   setTimeout(() => {
     // 手动触发一次滚动事件来更新 active 状态
     window.dispatchEvent(new Event('scroll'))
+    
+    // 检查 URL hash 并滚动到对应位置
+    handleUrlHashScroll()
   }, 200)
 }
 
@@ -127,6 +156,13 @@ onMounted(() => {
   // console.log('marker ref:', marker.value)
   useCopyCode()
   renderMarkdown(blogStore.blogId, blogStore.blogName, blogStore.blogContent)
+  
+  // 监听 hash 变化（浏览器前进/后退按钮）
+  window.addEventListener('hashchange', () => {
+    setTimeout(() => {
+      handleUrlHashScroll()
+    }, 100)
+  })
 })
 
 watch(() => blogStore.blogContent, () => {
