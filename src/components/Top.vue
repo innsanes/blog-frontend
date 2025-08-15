@@ -5,8 +5,7 @@
         <!-- 左侧 Logo 和标题 -->
         <div class="title">
           <RouterLink class="VPNavBarTitle title" to="/">
-            <img class="VPImage logo" src="@/assets/tangram_2.png" width="24" height="24" alt="">
-            <span>Innsane Blog</span>
+            <span>莹的网络日志</span>
           </RouterLink>
         </div>
 
@@ -81,6 +80,15 @@ const routerCreateNew = () => {
   font-size: 16px;
   font-weight: 600;
   color: var(--vp-c-text-1);
+}
+
+.logo {
+  border-radius: 4px;
+  transition: transform 0.2s ease;
+}
+
+.logo:hover {
+  transform: scale(1.1);
 }
 
 .content {
