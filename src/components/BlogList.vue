@@ -111,10 +111,10 @@ const loadBlogs = () => {
   // 获取所有可能的查询参数
   const category = route.query.category as string
   const page = parseInt(route.query.page as string) || undefined
-  const size = parseInt(route.query.size as string) || 10
-  const useCursor = route.query.useCursor === 'true'
-  const cursor = parseInt(route.query.cursor as string) || undefined
-  const forward = route.query.forward === 'true'
+  const size = parseInt(route.query.size as string) || 30
+  const useCursor = true
+  const cursor = parseInt(route.query.cursor as string) || 99999
+  const forward = false
   
   currentCategory.value = category || ''
   
