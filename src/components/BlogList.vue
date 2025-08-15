@@ -212,6 +212,7 @@ defineExpose({
   font-weight: 500;
   line-height: 1.4;
   flex-shrink: 0;
+  font-size: 22px;
 }
 
 /* 分类标签容器 */
