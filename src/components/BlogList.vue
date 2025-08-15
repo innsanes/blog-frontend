@@ -212,7 +212,7 @@ defineExpose({
   font-weight: 500;
   line-height: 1.4;
   flex-shrink: 0;
-  font-size: 22px;
+  font-size: 18px;
 }
 
 /* 分类标签容器 */
@@ -247,7 +247,7 @@ defineExpose({
 
 /* 单元格样式 */
 .vp-table :deep(.el-table__cell) {
-  padding: 12px 0;
+  padding: 18px 0;
   border: none !important;
   border-bottom: 1px solid var(--vp-c-divider) !important;
 }
