@@ -7,6 +7,7 @@ export interface Blog {
   content: string;
   categories: string[];
   view: number;
+  characters: number;
   createTime: number;
   updateTime: number;
 }
@@ -18,6 +19,7 @@ const defaultBlog: Blog = {
   content: '',
   categories: [],
   view: 0,
+  characters: 0,
   createTime: 0,
   updateTime: 0
 }
@@ -45,6 +47,8 @@ export const useBlogStore = defineStore('blog', {
     blogCreateTime: (state) => state.currentBlog.createTime,
     // 获取当前博客修改时间
     blogUpdateTime: (state) => state.currentBlog.updateTime,
+    // 获取当前博客字符数
+    blogCharacters: (state) => state.currentBlog.characters,
     // 检查是否为新博客
     isNewBlog: (state) => state.currentBlog.id === 0,
   },

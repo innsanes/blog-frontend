@@ -33,6 +33,10 @@
                      <span class="outline-info-value">{{ blogStore.blogView }}</span>
                    </div>
                    <div class="outline-info-item">
+                     <span class="outline-info-label">Characters:</span>
+                     <span class="outline-info-value">{{ blogStore.blogCharacters }}</span>
+                   </div>
+                   <div class="outline-info-item">
                      <span class="outline-info-label">Created:</span>
                      <span class="outline-info-value">{{ timeFormatDate(blogStore.blogCreateTime) }}</span>
                    </div>
