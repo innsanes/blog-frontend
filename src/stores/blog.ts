@@ -5,6 +5,7 @@ export interface Blog {
   id: number;
   name: string;
   content: string;
+  summary?: string;      // 博客摘要
   categories: string[];
   view: number;
   characters: number;
@@ -17,6 +18,7 @@ const defaultBlog: Blog = {
   id: 0,
   name: '',
   content: '',
+  summary: '',
   categories: [],
   view: 0,
   characters: 0,
@@ -39,6 +41,8 @@ export const useBlogStore = defineStore('blog', {
     blogName: (state) => state.currentBlog.name,
     // 获取当前博客内容
     blogContent: (state) => state.currentBlog.content,
+    // 获取当前博客摘要
+    blogSummary: (state) => state.currentBlog.summary,
     // 获取当前博客分类
     blogCategories: (state) => state.currentBlog.categories,
     // 获取当前博客浏览数

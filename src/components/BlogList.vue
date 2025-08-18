@@ -13,44 +13,76 @@
       共 {{ totalCount }} 篇博客
     </div>
     
-    <el-table 
-      :data="blogs" 
-      class="vp-table"
-      :show-header="true"
-    >
-      <el-table-column prop="name">
-        <template #default="scope">
-          <div class="blog-item">
-            <div class="title-with-categories">
-              <RouterLink 
-                class="vp-link blog-title" 
-                :to="blogRouter(scope.row.id)"
-              >
-                {{ scope.row.name }}
-              </RouterLink>
-              <span class="blog-categories" v-if="scope.row.categories && scope.row.categories.length > 0">
-                <Category
-                  v-for="category in scope.row.categories"
-                  :key="category"
-                  :category="category"
-                />
-              </span>
-            </div>
-          </div>
-        </template>
-      </el-table-column>
-      <el-table-column 
-        prop="createTime" 
-        width="120"
-        class-name="vp-time-cell"
+    <!-- 博客文章列表 -->
+    <div class="blog-articles">
+      <article 
+        v-for="blog in blogs" 
+        :key="blog.id" 
+        class="blog-article"
       >
-        <template #default="scope">
-          <span class="vp-time">
-            {{ timeFormatDate(scope.row.createTime) }}
-          </span>
-        </template>
-      </el-table-column>
-    </el-table>
+        <div class="article-header">
+          <RouterLink 
+            class="article-title" 
+            :to="blogRouter(blog.id)"
+          >
+            {{ blog.name }}
+          </RouterLink>
+        </div>
+        
+        <div class="article-meta">
+          <div class="meta-item">
+            <svg class="meta-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+              <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z" />
+              <path d="M16 3v4" />
+              <path d="M8 3v4" />
+              <path d="M4 11h16" />
+              <path d="M7 14h.013" />
+              <path d="M10.01 14h.005" />
+              <path d="M13.01 14h.005" />
+              <path d="M16.015 14h.005" />
+              <path d="M13.015 17h.005" />
+              <path d="M7.01 17h.005" />
+              <path d="M10.01 17h.005" />
+            </svg>
+            <time class="article-date">{{ timeFormatDate(blog.createTime) }}</time>
+          </div>
+          <div class="meta-item">
+            <svg class="meta-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+              <path d="M3 8v4.172a2 2 0 0 0 .586 1.414l5.71 5.71a2.41 2.41 0 0 0 3.408 0l3.592 -3.592a2.41 2.41 0 0 0 0 -3.408l-5.71 -5.71a2 2 0 0 0 -1.414 -.586h-4.172a2 2 0 0 0 -2 2z" />
+              <path d="M18 19l1.592 -1.592a4.82 4.82 0 0 0 0 -6.816l-4.592 -4.592" />
+              <path d="M7 10h-.01" />
+            </svg>
+            <span class="article-categories" v-if="blog.categories && blog.categories.length > 0">
+              <Category
+                v-for="category in blog.categories"
+                :key="category"
+                :category="category"
+              />
+            </span>
+          </div>
+        </div>
+        
+        <div class="article-excerpt" v-if="getBlogSummary(blog)">
+          {{ getBlogSummary(blog) }}
+        </div>
+        
+        <div class="article-footer">
+          <RouterLink 
+            class="read-more" 
+            :to="blogRouter(blog.id)"
+          >
+            继续阅读 →
+          </RouterLink>
+        </div>
+      </article>
+    </div>
+    
+    <!-- 分页导航 -->
+    <div class="pagination" v-if="totalCount > 0">
+      <span class="page-info">[1] 2 >>></span>
+    </div>
   </div>
 </template>
 
@@ -69,6 +101,26 @@ const route = useRoute()
 
 const blogRouter = function (id: number) {
   return '/blog/' + id
+}
+
+const getBlogSummary = function (blog: BlogListItem) {
+  // 如果有summary字段，直接返回
+  if (blog.summary) {
+    return blog.summary
+  }
+  
+  // 如果没有summary但有content，从content中提取摘要
+  if (blog.content) {
+    // 移除HTML标签，获取纯文本
+    const plainText = blog.content.replace(/<[^>]*>/g, '')
+    // 截取前150个字符作为摘要
+    if (plainText.length > 150) {
+      return plainText.substring(0, 150) + '...'
+    }
+    return plainText
+  }
+  
+  return ''
 }
 
 const fetchBlogs = async (params?: BlogListParams) => {
@@ -192,166 +244,237 @@ defineExpose({
   font-size: 14px;
 }
 
-/* 博客项容器 */
-.blog-item {
+/* 博客文章列表 */
+.blog-articles {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0;
 }
 
-/* 标题和分类容器 */
-.title-with-categories {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-/* 博客标题 */
-.blog-title {
-  font-weight: 500;
-  line-height: 1.4;
-  flex-shrink: 0;
-  font-size: 18px;
-}
-
-/* 分类标签容器 */
-.blog-categories {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-}
-
-/* 表格样式 */
-.vp-table {
-  width: 100%;
-  background: var(--vp-c-bg);
-  --el-table-border-color: transparent;
-  --el-table-header-bg-color: transparent;
-}
-
-/* 隐藏表头 */
-.vp-table :deep(.el-table__header) {
-  display: none;
-}
-
-/* 行样式 */
-.vp-table :deep(.el-table__row) {
-  background: var(--vp-c-bg);
+.blog-article {
+  padding: 32px 0;
+  border-bottom: 1px solid var(--vp-c-divider);
   transition: background-color 0.25s;
 }
 
-.vp-table :deep(.el-table__row):hover {
-  background: var(--vp-c-bg-alt) !important;
+.blog-article:last-child {
+  border-bottom: none;
 }
 
-/* 单元格样式 */
-.vp-table :deep(.el-table__cell) {
-  padding: 18px 0;
-  border: none !important;
-  border-bottom: 1px solid var(--vp-c-divider) !important;
+.blog-article:hover {
+  background: var(--vp-c-bg-soft);
+  margin: 0 -24px;
+  padding-left: 24px;
+  padding-right: 24px;
+  border-radius: 8px;
 }
 
-/* 链接样式 */
-.vp-link {
+/* 文章标题 */
+.article-header {
+  margin-bottom: 12px;
+}
+
+.article-title {
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.4;
   color: var(--vp-c-text-1);
   text-decoration: none;
-  font-weight: 500;
   transition: color 0.25s;
 }
 
-.vp-link:hover {
+.article-title:hover {
   color: var(--vp-c-brand);
   text-decoration: underline;
 }
 
-/* 时间样式 */
-.vp-time {
+/* 文章元数据 */
+.article-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+  color: var(--vp-c-text-2);
+  font-size: 14px;
+  font-family: var(--vp-font-family-mono);
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.meta-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--vp-c-text-3);
+}
+
+.article-date {
+  color: var(--vp-c-text-3);
+  font-size: 14px;
+}
+
+/* 文章分类标签 */
+.article-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+
+/* 文章摘要 */
+.article-excerpt {
+  margin-bottom: 16px;
+  color: var(--vp-c-text-2);
+  font-size: 15px;
+  line-height: 1.6;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3; /* 显示3行 */
+  -webkit-box-orient: vertical;
+  max-height: 4.8em; /* 3行的高度 */
+  word-wrap: break-word;
+  hyphens: auto;
+}
+
+/* 文章底部 */
+.article-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.read-more {
+  color: var(--vp-c-text-3);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: color 0.25s;
+}
+
+.read-more:hover {
+  color: var(--vp-c-brand);
+  text-decoration: underline;
+}
+
+/* 分页导航 */
+.pagination {
+  margin-top: 32px;
+  text-align: center;
   color: var(--vp-c-text-2);
   font-size: 0.9em;
+}
+
+.page-info {
   font-family: var(--vp-font-family-mono);
-  float: right;
+}
+
+.meta-separator {
+  color: var(--vp-c-text-3);
+  font-size: 14px;
+  margin: 0 4px;
+  opacity: 0.6;
 }
 
 /* 响应式设计 */
-@media (max-width: 480px) {
+@media (max-width: 768px) {
   .blog-list {
     padding: 0 16px;
     margin-top: calc(var(--vp-nav-height) + 16px);
   }
-
-  /* 隐藏表头 */
-  .vp-table :deep(.el-table__header) {
-    display: none;
+  
+  .blog-article {
+    padding: 24px 0;
   }
-
-  /* 表格行变为垂直布局 */
-  .vp-table :deep(.el-table__row) {
-    display: block;
-    margin-bottom: 16px;
-    padding: 12px;
-    border: 1px solid var(--vp-c-divider);
-    border-radius: 8px;
-    background: var(--vp-c-bg-soft);
+  
+  .blog-article:hover {
+    margin: 0 -16px;
+    padding-left: 16px;
+    padding-right: 16px;
   }
-
-  /* 单元格布局调整 */
-  .vp-table :deep(.el-table__cell) {
-    display: block;
-    border: none !important;
-    padding: 0 !important;
+  
+  .article-title {
+    font-size: 20px;
   }
-
-  /* 标题单元格：占满一行 */
-  .vp-table :deep(.el-table__cell:first-child) {
-    margin-bottom: 8px;
-  }
-
-  /* 创建第二行的flex容器 */
-  .vp-table :deep(.el-table__row)::after {
-    content: '';
-    display: block;
-    clear: both;
-  }
-
-  /* 时间单元格 */
-  .vp-table :deep(.vp-time-cell) {
-    float: right;
-    text-align: right;
-  }
-
-  /* 时间样式调整 */
-  .vp-time {
-    display: inline-block;
-    margin-top: 0;
-    font-size: 0.8em;
-    color: var(--vp-c-text-3);
-  }
-
-  /* 移动端：标题和分类垂直布局 */
-  .title-with-categories {
+  
+  .article-meta {
     flex-direction: column;
     align-items: flex-start;
+    gap: 8px;
+    font-family: var(--vp-font-family-mono);
+  }
+  
+  .meta-separator {
+    display: none;
+  }
+  
+  .meta-item {
     gap: 6px;
   }
-
-  /* 分类标签样式调整 */
-  .blog-categories {
-    margin-top: 0;
-    display: flex;
+  
+  .meta-icon {
+    width: 14px;
+    height: 14px;
   }
-
-  /* 标题样式 */
-  .blog-title {
-    font-size: 16px;
-    line-height: 1.3;
+  
+  .article-categories {
+    gap: 2px;
+  }
+  
+  .article-excerpt {
+    font-size: 14px;
+    -webkit-line-clamp: 2; /* 移动端显示2行 */
+    max-height: 3.2em;
   }
 }
 
-/* 中等屏幕优化 */
-@media (max-width: 768px) and (min-width: 481px) {
+@media (max-width: 480px) {
   .blog-list {
-    padding: 0 20px;
+    padding: 0 12px;
+  }
+  
+  .blog-article {
+    padding: 20px 0;
+  }
+  
+  .blog-article:hover {
+    margin: 0 -12px;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  
+  .article-title {
+    font-size: 18px;
+  }
+  
+  .category-header {
+    padding: 12px 16px;
+    margin-bottom: 16px;
+  }
+  
+  .category-display {
+    font-size: 16px;
+  }
+  
+  .article-excerpt {
+    font-size: 13px;
+    -webkit-line-clamp: 2;
+    max-height: 3.2em;
+  }
+  
+  .meta-icon {
+    width: 13px;
+    height: 13px;
+  }
+  
+  .article-meta {
+    font-size: 13px;
+    font-family: var(--vp-font-family-mono);
+  }
+  
+  .article-date {
+    font-size: 13px;
   }
 }
 </style>

@@ -14,6 +14,7 @@ export interface BlogListParams {
 // 博客列表项类型（继承自Blog，但可能不包含content以节省流量）
 export interface BlogListItem extends Omit<Blog, 'content'> {
   content?: string; // 列表中可能不包含完整内容
+  summary?: string; // 博客摘要
 }
 
 // 博客列表响应类型
