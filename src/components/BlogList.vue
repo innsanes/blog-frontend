@@ -218,6 +218,10 @@ defineExpose({
   background: var(--vp-c-bg-soft);
   border-left: 4px solid var(--vp-c-brand);
   border-radius: 6px;
+  margin-left: -24px;
+  margin-right: -24px;
+  padding-left: 44px;
+  padding-right: 44px;
 }
 
 .category-display {
@@ -242,6 +246,10 @@ defineExpose({
   margin-bottom: 16px;
   color: var(--vp-c-text-2);
   font-size: 14px;
+  margin-left: -24px;
+  margin-right: -24px;
+  padding-left: 24px;
+  padding-right: 24px;
 }
 
 /* 博客文章列表 */
@@ -252,7 +260,7 @@ defineExpose({
 }
 
 .blog-article {
-  padding: 32px 0;
+  padding: 16px 0;
   border-bottom: 1px solid var(--vp-c-divider);
   transition: background-color 0.25s;
 }
@@ -325,7 +333,7 @@ defineExpose({
 
 /* 文章摘要 */
 .article-excerpt {
-  margin-bottom: 16px;
+  margin-bottom: 8px;
   color: var(--vp-c-text-2);
   font-size: 15px;
   line-height: 1.6;
@@ -384,6 +392,20 @@ defineExpose({
     margin-top: calc(var(--vp-nav-height) + 16px);
   }
   
+  .category-header {
+    margin-left: -16px;
+    margin-right: -16px;
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+  
+  .blog-count {
+    margin-left: -16px;
+    margin-right: -16px;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  
   .blog-article {
     padding: 24px 0;
   }
@@ -432,6 +454,20 @@ defineExpose({
 @media (max-width: 480px) {
   .blog-list {
     padding: 0 12px;
+  }
+  
+  .category-header {
+    margin-left: -12px;
+    margin-right: -12px;
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+  
+  .blog-count {
+    margin-left: -12px;
+    margin-right: -12px;
+    padding-left: 12px;
+    padding-right: 12px;
   }
   
   .blog-article {
