@@ -260,7 +260,8 @@ defineExpose({
 }
 
 .blog-article {
-  padding: 16px 0;
+  padding-top: 32px;
+  padding-bottom: 16px;
   border-bottom: 1px solid var(--vp-c-divider);
   transition: background-color 0.25s;
 }
