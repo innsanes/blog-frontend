@@ -18,7 +18,7 @@
             >
               首页
             </RouterLink>
-            <VPNavBarAppearance class="appearance" />
+            <!-- <VPNavBarAppearance class="appearance" /> -->
           </div>
         </div>
       </div>
@@ -50,7 +50,7 @@ const routerCreateNew = () => {
   top: 0;
   left: 0;
   right: 0;
-  z-index: 1000;
+  z-index: 6;
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: saturate(50%) blur(8px);
   transition: background-color 0.5s;
