@@ -3,7 +3,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { fetchBlog } from '../api/blog'
 import { useBlogStore, type Blog } from '../stores/blog';
@@ -27,6 +27,10 @@ const getBlog = async (id: number) => {
                 categories: blogData.categories || []
             }
             blogStore.setBlog(safeBlogData)
+            
+            // 设置页面标题
+            document.title = `${safeBlogData.name} - 莹的网络日志`
+        
         }
     } catch (error) {
         console.error('获取博客失败:', error)
@@ -44,6 +48,13 @@ onMounted(() => {
     } else {
         // 如果是新博客，重置store
         blogStore.resetBlog()
+    }
+})
+
+// 监听路由变化，确保页面标题和跟踪正确
+watch(() => route.params.id, (newId) => {
+    if (newId && Number(newId) !== 0) {
+        getBlog(Number(newId))
     }
 })
 </script>
