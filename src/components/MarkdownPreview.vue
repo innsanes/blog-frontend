@@ -53,6 +53,9 @@
       <div class="content" >
         <div class="content-container">
           <div class="VPContent vp-doc" v-html="renderedContentHtml" />
+          <div class="comments-section">
+            <Giscus />
+          </div>
         </div>
       </div>
     </div>
@@ -61,7 +64,6 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch, nextTick, shallowRef} from 'vue'
-import { RouterLink } from 'vue-router'
 import { useBlogStore } from '../stores/blog'
 import { renderMermaidSSE } from './markdownvp/plugins/mermaid'
 import {createMarkdownRenderer} from './markdownvp/markdown'
@@ -70,6 +72,9 @@ import { getHeaders, useActiveAnchor, refreshResolvedHeaders, getAbsoluteTop, ty
 import MarkdownOutline from './MarkdownOutline.vue'
 import Category from './Category.vue'
 import { timeFormatDate } from '../util/time'
+import Giscus from './Giscus.vue'
+import mediumZoom from 'medium-zoom'
+
 
 const blogStore = useBlogStore()
 const renderedContentHtml = ref<string>('')
@@ -143,6 +148,10 @@ const renderMarkdown = async (id: number, title: string, content: string) => {
   
   // 重新获取 headers 并更新
   headers.value = getHeaders([2, 2])
+
+  mediumZoom('img', { 
+    background: 'rgba(0,0,0,0.8)'
+  })
   
   // 延迟一点时间确保 DOM 完全渲染后再触发 active 状态更新
   setTimeout(() => {
@@ -196,11 +205,11 @@ watch(() => blogStore.blogContent, () => {
   .VPDoc:not(.has-sidebar) .container {
     display: flex;
     justify-content: center;
-    max-width: 992px;
+    max-width: 1008px; /* 992 + 16 = 1008px */
   }
 
   .VPDoc:not(.has-sidebar) .content {
-    max-width: 752px;
+    max-width: 768px; /* 752 + 16 = 768px */
   }
 }
 
@@ -217,11 +226,11 @@ watch(() => blogStore.blogContent, () => {
 
 @media (min-width: 1440px) {
   .VPDoc:not(.has-sidebar) .content {
-    max-width: 784px;
+    max-width: 800px; /* 784 + 16 = 800px */
   }
 
   .VPDoc:not(.has-sidebar) .container {
-    max-width: 1104px;
+    max-width: 1120px; /* 1104 + 16 = 1120px */
   }
 }
 
@@ -237,18 +246,19 @@ watch(() => blogStore.blogContent, () => {
   flex-grow: 1;
   padding-left: 32px;
   width: 100%;
-  max-width: 256px;
+  max-width: 272px; /* 256 + 16 = 272px */
 }
 
 .aside-container {
   position: fixed;
   top: 0;
   padding-top: calc(var(--vp-nav-height) + var(--vp-layout-top-height, 0px) + var(--vp-doc-top-height, 0px) + 48px);
-  width: 224px;
+  width: 240px; /* 224 + 16 = 240px */
   height: 100vh;
   overflow-x: hidden;
   overflow-y: auto;
   scrollbar-width: none;
+  padding-bottom: 32px; /* 添加底部内边距，确保内容不被底部遮挡 */
 }
 
 .aside-container::-webkit-scrollbar {
@@ -258,17 +268,18 @@ watch(() => blogStore.blogContent, () => {
 .aside-curtain {
   position: fixed;
   bottom: 0;
-  z-index: 10;
-  width: 224px;
+  z-index: 5;
+  width: 240px; /* 224 + 16 = 240px */
   height: 32px;
   background: linear-gradient(transparent, var(--vp-c-bg) 70%);
   pointer-events: none;
+  left: calc(50% + 352px); /* 调整位置，确保在侧边栏区域 */
 }
 
 .aside-content {
   display: flex;
   flex-direction: column;
-  min-height: calc(100vh - (var(--vp-nav-height) + var(--vp-layout-top-height, 0px) + 48px));
+  min-height: calc(100vh - var(--vp-nav-height) - var(--vp-layout-top-height, 0px) - var(--vp-doc-top-height, 0px) - 48px);
   padding-bottom: 32px;
 }
 
@@ -297,7 +308,7 @@ watch(() => blogStore.blogContent, () => {
 }
 
 .VPDoc.has-aside .content-container {
-  max-width: 688px;
+  max-width: 704px; /* 688 + 16 = 704px */
 }
 
 .VPContent {
@@ -450,5 +461,21 @@ watch(() => blogStore.blogContent, () => {
 html {
   scroll-padding-top: var(--vp-nav-height);
   scroll-behavior: smooth;
+}
+
+/* 评论区域样式 */
+.comments-section {
+  margin-top: 64px;
+  padding-top: 24px;
+  border-top: 1px solid var(--vp-c-divider);
+}
+
+/* 确保 medium-zoom 图片查看器的层级高于其他元素 */
+:global(.medium-zoom-overlay) {
+  z-index: 10 !important;
+}
+
+:global(.medium-zoom-image) {
+  z-index: 11 !important;
 }
 </style>
