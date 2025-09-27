@@ -178,31 +178,6 @@ export async function createMarkdownRenderer(
     ...options.toc
   } as TocPluginOptions)
 
-  if (options.math) {
-    try {
-      const mathPlugin = await import('markdown-it-mathjax3')
-      md.use(mathPlugin.default ?? mathPlugin, {
-        ...(typeof options.math === 'boolean' ? {} : options.math)
-      })
-      const origMathInline = md.renderer.rules.math_inline!
-      md.renderer.rules.math_inline = function (...args) {
-        return origMathInline
-          .apply(this, args)
-          .replace(/^<mjx-container /, '<mjx-container v-pre ')
-      }
-      const origMathBlock = md.renderer.rules.math_block!
-      md.renderer.rules.math_block = function (...args) {
-        return origMathBlock
-          .apply(this, args)
-          .replace(/^<mjx-container /, '<mjx-container v-pre tabindex="0" ')
-      }
-    } catch (error) {
-      throw new Error(
-        'You need to install `markdown-it-mathjax3` to use math support.'
-      )
-    }
-  }
-
   // apply user config
   if (options.config) {
     await options.config(md)

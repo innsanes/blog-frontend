@@ -12,6 +12,7 @@
     "docs:preview": "vitepress preview docs"
   },
   "dependencies": {
+    "@giscus/vue": "^3.1.1",
     "@mdit-vue/plugin-component": "^2.1.4",
     "@mdit-vue/plugin-frontmatter": "^2.1.4",
     "@mdit-vue/plugin-headers": "^2.1.4",
@@ -38,6 +39,7 @@
     "markdown-it-mermaid": "^0.2.5",
     "markdown-it-toc-done-right": "^4.2.0",
     "md-editor-v3": "^4.19.2",
+    "medium-zoom": "^1.1.0",
     "mermaid": "^11.6.0",
     "pinia": "^2.2.2",
     "pinia-plugin-persistedstate": "^3.2.3",
@@ -56,6 +58,7 @@
     "@vitejs/plugin-vue": "^5.1.2",
     "less": "^4.2.0",
     "shiki": "^3.4.0",
+    "terser": "^5.44.0",
     "typescript": "^5.5.3",
     "vite": "^6.3.5",
     "vitepress": "^1.6.3",
