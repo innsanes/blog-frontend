@@ -9,8 +9,8 @@
     </div>
     
     <!-- 博客总数显示 -->
-    <div class="blog-count" v-if="totalCount > 0">
-      共 {{ totalCount }} 篇博客
+    <div class="blog-count" v-if="blogs.length > 0">
+      已加载 {{ blogs.length }} 篇博客
     </div>
     
     <!-- 博客文章列表 -->
@@ -79,17 +79,30 @@
       </article>
     </div>
     
-    <!-- 分页导航 -->
-    <div class="pagination" v-if="totalCount > 0">
-      <span class="page-info">[1] 2 >>></span>
+    <!-- 加载更多指示器 -->
+    <div class="load-more" v-if="hasMore && !loading">
+      <div class="load-more-trigger" ref="loadMoreTrigger">
+        <div class="load-more-text">滚动加载更多...</div>
+      </div>
+    </div>
+    
+    <!-- 加载状态 -->
+    <div class="loading-indicator" v-if="loading">
+      <div class="loading-spinner"></div>
+      <span>加载中...</span>
+    </div>
+    
+    <!-- 没有更多内容提示 -->
+    <div class="no-more" v-if="!hasMore && blogs.length > 0">
+      <span>已加载全部 {{ blogs.length }} 篇博客</span>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, onUnmounted, nextTick } from 'vue'
 import { bloglist, type BlogListItem, type BlogListParams } from '../api/blog'
-import { useRouter, useRoute } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { timeFormatDate } from '../util/time'
 import Category from './Category.vue'
@@ -98,6 +111,14 @@ const blogs = ref<BlogListItem[]>([])
 const totalCount = ref<number>(0)
 const currentCategory = ref<string>('')
 const route = useRoute()
+
+// 无限滚动相关状态
+const loading = ref<boolean>(false)
+const hasMore = ref<boolean>(true)
+const pageSize = ref<number>(5) // 每页加载5条
+const currentCursor = ref<number>(99999) // 当前游标，初始值设为很大的数
+const loadMoreTrigger = ref<HTMLElement | null>(null)
+let observer: IntersectionObserver | null = null
 
 const blogRouter = function (id: number) {
   return '/blog/' + id
@@ -123,9 +144,13 @@ const getBlogSummary = function (blog: BlogListItem) {
   return ''
 }
 
-const fetchBlogs = async (params?: BlogListParams) => {
+const fetchBlogs = async (params?: BlogListParams, isLoadMore = false) => {
+  if (loading.value) return
+  
   try {
+    loading.value = true
     const response = await bloglist(params)
+    
     // 安全处理函数，确保每个博客都有categories字段
     const safeProcessBlogs = (blogList: any[]) => {
       return blogList.map(blog => ({
@@ -134,69 +159,164 @@ const fetchBlogs = async (params?: BlogListParams) => {
       }))
     }
 
+    let newBlogs: BlogListItem[] = []
+
     // 根据实际API响应结构调整数据访问路径
-    // 如果后端直接返回BlogListResponse结构
     if (response.data.data && response.data.count !== undefined) {
-      blogs.value = safeProcessBlogs(response.data.data)
-      totalCount.value = response.data.count
-    }
-    // 如果后端返回被包装的结构（如 {code, data: BlogListResponse, message}）
-    else if (response.data && response.data.data && response.data.data.data && response.data.data.count !== undefined) {
-      blogs.value = safeProcessBlogs(response.data.data.data)
-      totalCount.value = response.data.data.count
-    }
-    // 兜底：保持原有逻辑
-    else {
+      newBlogs = safeProcessBlogs(response.data.data)
+      // 只在首次加载时设置totalCount（用于显示总数）
+      if (!isLoadMore) {
+        totalCount.value = response.data.count
+      }
+    } else if (response.data && response.data.data && response.data.data.data && response.data.data.count !== undefined) {
+      newBlogs = safeProcessBlogs(response.data.data.data)
+      // 只在首次加载时设置totalCount（用于显示总数）
+      if (!isLoadMore) {
+        totalCount.value = response.data.data.count
+      }
+    } else {
       const rawData = response.data?.data || response.data || []
-      blogs.value = safeProcessBlogs(rawData)
-      totalCount.value = response.data?.count || blogs.value.length
+      newBlogs = safeProcessBlogs(rawData)
+      // 只在首次加载时设置totalCount（用于显示总数）
+      if (!isLoadMore) {
+        totalCount.value = response.data?.count || newBlogs.length
+      }
     }
+
+    if (isLoadMore) {
+      // 加载更多时追加到现有列表
+      blogs.value = [...blogs.value, ...newBlogs]
+    } else {
+      // 首次加载或重新加载时替换列表
+      blogs.value = newBlogs
+    }
+    
+    // 更新游标为最后一个博客的ID
+    if (newBlogs.length > 0) {
+      currentCursor.value = newBlogs[newBlogs.length - 1].id
+    }
+    
+    // 检查是否还有更多内容：如果返回的数据少于请求的数量，说明没有更多了
+    hasMore.value = newBlogs.length === pageSize.value
+    
   } catch (error: any) {
     ElMessage.error('获取博客列表失败: ' + (error.message || '未知错误'))
+  } finally {
+    loading.value = false
   }
 }
 
-const router = useRouter()
+// 无限滚动相关方法
+const loadMore = () => {
+  if (loading.value || !hasMore.value) return
+  
+  loadBlogs(true) // 传入isLoadMore参数
+}
+
+const setupIntersectionObserver = () => {
+  if (!loadMoreTrigger.value) {
+    // 如果元素不存在，1秒后重试
+    setTimeout(() => {
+      setupIntersectionObserver()
+    }, 1000)
+    return
+  }
+  
+  observer = new IntersectionObserver(
+    (entries) => {
+      const target = entries[0]
+      if (target.isIntersecting && hasMore.value && !loading.value) {
+        loadMore()
+      }
+    },
+    {
+      root: null,
+      rootMargin: '0px', // 不提前触发，必须真正滚动到底部
+      threshold: 1 // 需要100%的元素进入视口才触发
+    }
+  )
+  
+  observer.observe(loadMoreTrigger.value)
+}
+
+const resetPagination = () => {
+  currentCursor.value = 99999 // 重置游标
+  hasMore.value = true
+  blogs.value = []
+}
 
 // 加载博客列表（支持多种查询参数）
-const loadBlogs = () => {
+const loadBlogs = (isLoadMore = false) => {
   // 获取所有可能的查询参数
   const category = route.query.category as string
-  const page = parseInt(route.query.page as string) || undefined
-  const size = parseInt(route.query.size as string) || 30
+  const size = pageSize.value
   const useCursor = true
-  const cursor = parseInt(route.query.cursor as string) || 99999
+  const cursor = isLoadMore ? currentCursor.value : 99999
   const forward = false
   
   currentCategory.value = category || ''
   
   // 构建API查询参数
-  const params: BlogListParams = { size }
-  
-  if (category) params.category = category
-  if (page !== undefined) params.page = page
-  if (useCursor) {
-    params.useCursor = useCursor
-    if (cursor !== undefined) params.cursor = cursor
-    params.forward = forward
+  const params: BlogListParams = { 
+    size, 
+    useCursor, 
+    cursor, 
+    forward 
   }
   
-  fetchBlogs(params)
+  if (category) params.category = category
+  
+  fetchBlogs(params, isLoadMore)
 }
 
-onMounted(() => {
-  loadBlogs()
+onMounted(async () => {
+  await loadBlogs()
+  await nextTick()
+  // 延迟设置观察器，确保DOM完全渲染
+  setTimeout(() => {
+    setupIntersectionObserver()
+  }, 100)
+})
+
+onUnmounted(() => {
+  if (observer) {
+    observer.disconnect()
+  }
 })
 
 // 监听路由查询参数变化
 watch(() => route.query, () => {
+  resetPagination()
   loadBlogs()
+  nextTick(() => {
+    if (observer) {
+      observer.disconnect()
+    }
+    // 延迟设置观察器，确保DOM完全渲染
+    setTimeout(() => {
+      setupIntersectionObserver()
+    }, 100)
+  })
 }, { deep: true })
+
+// 监听loadMoreTrigger变化，重新设置观察器
+watch(loadMoreTrigger, (newTrigger) => {
+  if (newTrigger && observer) {
+    observer.disconnect()
+    // 延迟设置观察器，确保DOM完全渲染
+    setTimeout(() => {
+      setupIntersectionObserver()
+    }, 100)
+  }
+})
 
 // 暴露给外部使用的方法
 defineExpose({
   fetchBlogs,
-  refresh: loadBlogs
+  refresh: () => {
+    resetPagination()
+    loadBlogs()
+  }
 })
 </script>
 
@@ -367,16 +487,59 @@ defineExpose({
   text-decoration: underline;
 }
 
-/* 分页导航 */
-.pagination {
+/* 无限滚动相关样式 */
+.load-more {
   margin-top: 32px;
-  text-align: center;
-  color: var(--vp-c-text-2);
-  font-size: 0.9em;
+  padding: 20px 0;
 }
 
-.page-info {
-  font-family: var(--vp-font-family-mono);
+.load-more-trigger {
+  height: 60px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.load-more-text {
+  color: var(--vp-c-text-3);
+  font-size: 14px;
+  padding: 20px;
+  text-align: center;
+}
+
+.loading-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 32px 0;
+  padding: 20px;
+  color: var(--vp-c-text-2);
+  font-size: 14px;
+}
+
+.loading-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--vp-c-divider);
+  border-top: 2px solid var(--vp-c-brand);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.no-more {
+  text-align: center;
+  margin: 32px 0;
+  padding: 20px;
+  color: var(--vp-c-text-3);
+  font-size: 14px;
+  border-top: 1px solid var(--vp-c-divider);
 }
 
 .meta-separator {
@@ -512,6 +675,22 @@ defineExpose({
   
   .article-date {
     font-size: 13px;
+  }
+  
+  /* 无限滚动响应式 */
+  .loading-indicator {
+    font-size: 13px;
+    padding: 16px;
+  }
+  
+  .loading-spinner {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .no-more {
+    font-size: 13px;
+    padding: 16px;
   }
 }
 </style>
