@@ -26,6 +26,24 @@ export interface BlogListResponse {
 // 博客详情类型（与Blog完全一致）
 export type BlogDetail = Blog;
 
+// 搜索结果类型
+export interface BlogSearchResult {
+  id: number;
+  name: string;
+  content: string;
+  createTime: string;
+  updateTime: string;
+  category?: string;
+  summary?: string;
+  matchCount: number; // 匹配次数
+}
+
+// 搜索响应类型
+export interface BlogSearchResponse {
+  data: BlogSearchResult[];
+  count: number;
+}
+
 export function bloglist(params?: BlogListParams) {
   return request({
     url: '/blog',
@@ -38,5 +56,16 @@ export function fetchBlog(id: number) {
   return request({
     url: `/blog/${id}`,
     method: 'get',
+  })
+}
+
+export function searchBlogs(query: string) {
+  return request({
+    url: '/blog/search',
+    method: 'get',
+    params: { 
+      search: query,
+      size: 20,
+    }
   })
 }

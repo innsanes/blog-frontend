@@ -1,16 +1,39 @@
 <template>
   <div class="vp-doc blog-list">
-    <!-- 当前分类过滤显示 -->
-    <div class="category-header" v-if="currentCategory">
-      <span class="category-display">category: {{ currentCategory }}</span>
-      <RouterLink to="/" class="clear-filter">
-        清除过滤
-      </RouterLink>
-    </div>
-    
-    <!-- 博客总数显示 -->
-    <div class="blog-count" v-if="blogs.length > 0">
-      已加载 {{ blogs.length }} 篇博客
+    <!-- 搜索和过滤信息行 -->
+    <div class="search-filter-row">
+      <!-- 搜索框 -->
+      <div class="search-container">
+        <div class="search-box">
+          <input 
+            v-model="searchQuery"
+            @keyup.enter="handleSearch"
+            type="text" 
+            placeholder="搜索博客..." 
+            class="search-input"
+          />
+          <button @click="handleSearch" class="search-button">
+            <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="m21 21-4.35-4.35"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      
+      <!-- 分类信息 -->
+      <div class="category-info" v-if="currentCategory">
+        <span class="category-label">分类:</span>
+        <span class="category-name">{{ currentCategory }}</span>
+        <RouterLink to="/" class="clear-filter">
+          清除过滤
+        </RouterLink>
+      </div>
+      
+      <!-- 博客数量 -->
+      <div class="blog-count" v-if="blogs.length > 0">
+        已加载 {{ blogs.length }} 篇博客
+      </div>
     </div>
     
     <!-- 博客文章列表 -->
@@ -102,7 +125,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, onUnmounted, nextTick } from 'vue'
 import { bloglist, type BlogListItem, type BlogListParams } from '../api/blog'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { timeFormatDate } from '../util/time'
 import Category from './Category.vue'
@@ -110,7 +133,9 @@ import Category from './Category.vue'
 const blogs = ref<BlogListItem[]>([])
 const totalCount = ref<number>(0)
 const currentCategory = ref<string>('')
+const searchQuery = ref<string>('')
 const route = useRoute()
+const router = useRouter()
 
 // 无限滚动相关状态
 const loading = ref<boolean>(false)
@@ -122,6 +147,16 @@ let observer: IntersectionObserver | null = null
 
 const blogRouter = function (id: number) {
   return '/blog/' + id
+}
+
+// 搜索处理
+const handleSearch = () => {
+  if (searchQuery.value.trim()) {
+    router.push({
+      path: '/search',
+      query: { q: searchQuery.value.trim() }
+    })
+  }
 }
 
 const getBlogSummary = function (blog: BlogListItem) {
@@ -328,48 +363,111 @@ defineExpose({
   padding: 0 24px;
 }
 
-/* 分类头部显示 */
-.category-header {
+/* 搜索和过滤信息行 */
+.search-filter-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20px;
-  padding: 16px 20px;
-  background: var(--vp-c-bg-soft);
-  border-left: 4px solid var(--vp-c-brand);
-  border-radius: 6px;
-  margin-left: -24px;
-  margin-right: -24px;
-  padding-left: 44px;
-  padding-right: 44px;
+  gap: 16px;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
 }
 
-.category-display {
-  font-size: 18px;
-  font-weight: 600;
+/* 搜索框样式 */
+.search-container {
+  flex: 1;
+  min-width: 300px;
+}
+
+.search-box {
+  position: relative;
+  max-width: 500px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 12px 50px 12px 16px;
+  border: 2px solid var(--vp-c-divider);
+  border-radius: 8px;
+  font-size: 16px;
+  background: var(--vp-c-bg);
   color: var(--vp-c-text-1);
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.search-input:focus {
+  border-color: var(--vp-c-brand-1);
+  box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.1);
+}
+
+.search-button {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--vp-c-brand-1);
+  border: none;
+  border-radius: 6px;
+  padding: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.search-button:hover {
+  background: var(--vp-c-brand-2);
+  transform: translateY(-50%) scale(1.05);
+}
+
+.search-icon {
+  color: white;
+  width: 20px;
+  height: 20px;
+}
+
+/* 分类信息 */
+.category-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--vp-c-text-2);
+  white-space: nowrap;
+}
+
+.category-label {
+  color: var(--vp-c-text-3);
+}
+
+.category-name {
+  color: var(--vp-c-brand-1);
+  font-weight: 500;
+  background: var(--vp-c-brand-soft);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
 }
 
 .clear-filter {
-  color: var(--vp-c-text-3);
+  color: var(--vp-c-brand-1);
   text-decoration: none;
-  font-size: 13px;
-  transition: color 0.25s;
+  font-size: 14px;
+  font-weight: 500;
+  transition: color 0.2s ease;
+  margin-left: 8px;
 }
 
 .clear-filter:hover {
-  color: var(--vp-c-brand);
+  color: var(--vp-c-brand-2);
 }
 
-/* 博客数量显示 */
+/* 博客数量 */
 .blog-count {
-  margin-bottom: 16px;
-  color: var(--vp-c-text-2);
   font-size: 14px;
-  margin-left: -24px;
-  margin-right: -24px;
-  padding-left: 24px;
-  padding-right: 24px;
+  color: var(--vp-c-text-3);
+  white-space: nowrap;
 }
 
 /* 博客文章列表 */
@@ -556,18 +654,19 @@ defineExpose({
     margin-top: calc(var(--vp-nav-height) + 16px);
   }
   
-  .category-header {
-    margin-left: -16px;
-    margin-right: -16px;
-    padding-left: 32px;
-    padding-right: 32px;
+  .search-filter-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
   }
   
-  .blog-count {
-    margin-left: -16px;
-    margin-right: -16px;
-    padding-left: 16px;
-    padding-right: 16px;
+  .search-container {
+    min-width: auto;
+    width: 100%;
+  }
+  
+  .category-info {
+    font-size: 13px;
   }
   
   .blog-article {
@@ -620,18 +719,19 @@ defineExpose({
     padding: 0 12px;
   }
   
-  .category-header {
-    margin-left: -12px;
-    margin-right: -12px;
-    padding-left: 24px;
-    padding-right: 24px;
+  .search-filter-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
   }
   
-  .blog-count {
-    margin-left: -12px;
-    margin-right: -12px;
-    padding-left: 12px;
-    padding-right: 12px;
+  .search-container {
+    min-width: auto;
+    width: 100%;
+  }
+  
+  .category-info {
+    font-size: 12px;
   }
   
   .blog-article {
