@@ -140,6 +140,22 @@ const renderMarkdown = async (id: number, title: string, content: string) => {
   renderMermaidSSE()
   loading.value = false
 
+  // 处理所有链接，让它们在新标签页中打开
+  nextTick(() => {
+    const contentElement = document.querySelector('.VPContent.vp-doc')
+    if (contentElement) {
+      const links = contentElement.querySelectorAll('a')
+      links.forEach(link => {
+        // 只处理外部链接，内部链接保持原样
+        const href = link.getAttribute('href')
+        if (href && (href.startsWith('http://') || href.startsWith('https://'))) {
+          link.setAttribute('target', '_blank')
+          link.setAttribute('rel', 'noopener noreferrer')
+        }
+      })
+    }
+  })
+
   // 等待 DOM 更新完成后再获取 headers
   await nextTick();
   
