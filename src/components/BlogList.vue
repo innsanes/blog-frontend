@@ -126,7 +126,6 @@
 import { ref, onMounted, watch, onUnmounted, nextTick } from 'vue'
 import { bloglist, type BlogListItem, type BlogListParams } from '../api/blog'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
 import { timeFormatDate } from '../util/time'
 import Category from './Category.vue'
 
@@ -235,7 +234,8 @@ const fetchBlogs = async (params?: BlogListParams, isLoadMore = false) => {
     hasMore.value = newBlogs.length === pageSize.value
     
   } catch (error: any) {
-    ElMessage.error('获取博客列表失败: ' + (error.message || '未知错误'))
+    console.error('获取博客列表失败:', error.message || '未知错误')
+    alert('获取博客列表失败: ' + (error.message || '未知错误'))
   } finally {
     loading.value = false
   }

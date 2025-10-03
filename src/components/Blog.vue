@@ -1,13 +1,13 @@
 <template>
-    <MarkdownPreview :mdContent="blogStore.blogContent" />
+    <MarkdownPreviewLazy :mdContent="blogStore.currentBlog?.content" />
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
-import { RouterLink, useRoute } from 'vue-router'
+import { onMounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { fetchBlog } from '../api/blog'
 import { useBlogStore, type Blog } from '../stores/blog';
-import MarkdownPreview from './MarkdownPreview.vue'
+import MarkdownPreviewLazy from './MarkdownPreviewLazy.vue'
 
 const blogStore = useBlogStore()
 const route = useRoute()

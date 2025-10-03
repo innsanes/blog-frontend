@@ -3,6 +3,10 @@ import {
   type ComponentPluginOptions
 } from '@mdit-vue/plugin-component'
 import {
+  frontmatterPlugin,
+  type FrontmatterPluginOptions
+} from '@mdit-vue/plugin-frontmatter'
+import {
   headersPlugin,
   type HeadersPluginOptions
 } from '@mdit-vue/plugin-headers'

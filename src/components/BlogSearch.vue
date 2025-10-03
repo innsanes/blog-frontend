@@ -93,8 +93,6 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
-import { timeFormatDate } from '../util/time'
 import { searchBlogs, type BlogSearchResult } from '../api/blog'
 
 const route = useRoute()
@@ -158,7 +156,8 @@ const performSearch = async (query: string) => {
     const response = await searchBlogs(query)
     searchResults.value = response.data || []
   } catch (error: any) {
-    ElMessage.error('搜索失败: ' + (error.message || '未知错误'))
+    console.error('搜索失败:', error.message || '未知错误')
+    alert('搜索失败: ' + (error.message || '未知错误'))
     searchResults.value = []
   } finally {
     loading.value = false

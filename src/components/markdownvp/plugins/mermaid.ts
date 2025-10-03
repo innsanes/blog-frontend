@@ -4,15 +4,15 @@ import CryptoJs from 'crypto-js'
 import { debounce } from 'lodash-es'
 
 const processMermaid = {
-  fn: (callback: any) => {}
+  fn: () => {}
 }
 
-const debounceRenderMermaid = debounce((callback = () => {}) => {
-  processMermaid.fn(callback)
+const debounceRenderMermaid = debounce(() => {
+  processMermaid.fn()
 }, 10)
 
-export const renderMermaidSSE = (callback = () => {}) => {
-  debounceRenderMermaid(callback)
+export const renderMermaidSSE = () => {
+  debounceRenderMermaid()
 }
 
 export const mermaidPlugin = (md: MarkdownIt, options: MermaidConfig = {}) => {
@@ -139,7 +139,7 @@ const verifyMermaid = (content: string) => {
         resolve({
           isValid: true
         })
-      }).catch((err) => {
+      }).catch(() => {
         resolve({
           isValid: false
         })
@@ -147,9 +147,9 @@ const verifyMermaid = (content: string) => {
   })
 }
 
-const transformMermaid = (content: string): string => {
-  return content.replace(/(```mermaid)(?![^]*?```)/g, '```')
-}
+// const transformMermaid = (content: string): string => {
+//   return content.replace(/(```mermaid)(?![^]*?```)/g, '```')
+// }
 
 const computeHash = (str: string) => {
   return CryptoJs.SHA256(str).toString(CryptoJs.enc.Hex)
